@@ -8,11 +8,48 @@
     </head>
 
     <body>
-        <!-- Шапка з назвою -->
-        <!-- Форма створення нотатки -->
-        <!-- Список нотаток -->
-        <!-- Блок перегляду обраної нотатки повністю -->
-        <!-- Підвал -->
+        <header>
+            <h1>Менеджер нотаток</h1>
+        </header>
+
+        <main>
+
+            <section id = "new-note">
+                <h2>Нова нотатка</h2>
+                <form id = "note-form">
+                    <label for = "note-title">Заголовок:</label>
+                    <input type = "text" id = "note-title" name = "note-title" required>
+
+                    <label for = "note-content">Зміст:</label>
+                    <textarea id = "note-content" name = "note-content" required></textarea>
+                </form>
+            </section>
+        
+            <section id = "notes-list">
+                <h2>Мої нотатки</h2>
+
+                <article>
+                    <h3>Нотатки з лекції</h3>
+                    <p>Бази даних, PostgreSQL</p>
+                </article>
+
+                <article>
+                    <h3>Пароль від Wifi</h3>
+                    <p>12345678</p>
+                </article>
+            </section>
+
+        </main>
+
+        <aside>
+            <h2>Перегляд обраної нотатки</h2>
+
+        </aside>
+
+        <footer>
+            <p>&copy; 2026 Менеджер нотаток. Розроблений в межах дисципліни "Програмування веб-застосунків".</p>
+        </footer>
+
         <script src="js/app.js"></script>
     </body>
 </html>

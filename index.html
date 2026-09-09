@@ -12,39 +12,43 @@
             <h1>Менеджер нотаток</h1>
         </header>
 
-        <main>
+        <div class = "layout">
+            <main>
 
-            <section id = "new-note">
-                <h2>Нова нотатка</h2>
-                <form id = "note-form">
-                    <label for = "note-title">Заголовок:</label>
-                    <input type = "text" id = "note-title" name = "note-title" required>
+                <section id = "new-note">
+                    <h2>Нова нотатка</h2>
+                    <form id = "note-form">
+                        <label for = "note-title">Заголовок:</label>
+                        <input type = "text" id = "note-title" name = "note-title" required>
 
-                    <label for = "note-content">Зміст:</label>
-                    <textarea id = "note-content" name = "note-content" required></textarea>
-                </form>
-            </section>
+                        <label for = "note-content">Зміст:</label>
+                        <textarea id = "note-content" name = "note-content" required></textarea>
+
+                        <button type="submit">Додати нотатку</button>
+                    </form>
+                </section>
         
-            <section id = "notes-list">
-                <h2>Мої нотатки</h2>
+                <section id = "notes-list">
+                    <h2>Мої нотатки</h2>
+                    <div class="cards">
+                        <article>
+                            <h3>Нотатки з лекції</h3>
+                            <p>Бази даних, PostgreSQL</p>
+                        </article>
 
-                <article>
-                    <h3>Нотатки з лекції</h3>
-                    <p>Бази даних, PostgreSQL</p>
-                </article>
+                        <article>
+                            <h3>Пароль від Wifi</h3>
+                            <p>12345678</p>
+                        </article>
+                    </div>
+                </section>
 
-                <article>
-                    <h3>Пароль від Wifi</h3>
-                    <p>12345678</p>
-                </article>
-            </section>
+            </main>
 
-        </main>
-
-        <aside>
-            <h2>Перегляд обраної нотатки</h2>
-
-        </aside>
+            <aside>
+                <h2>Перегляд обраної нотатки</h2>
+            </aside>
+        </div>
 
         <footer>
             <p>&copy; 2026 Менеджер нотаток. Розроблений в межах дисципліни "Програмування веб-застосунків".</p>

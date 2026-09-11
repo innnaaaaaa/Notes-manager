@@ -6,13 +6,36 @@ img{
     max-width: 100%;
     height: auto;
 }
+
+:root {
+    --font-body: system-ui, sans-serif;
+    --font-mono: 'Consolas', 'Courier New', monospace;
+
+    --fs-h1: 1.75rem;
+    --fs-h2: 1.25rem;
+    --fs-h3: 1.1rem;
+    --fs-body: 1rem;
+    --fs-small: 0.85rem;
+
+    --color-bg: #1e1e1e;
+    --color-bg-panel: #262626;
+    --color-bg-panel-alt: #2a2a2a;
+    --color-bg-aside: #2f2f2f;
+    --color-text: #eaeaea;
+    --color-text-heading: #ffffff;
+    --color-text-muted: #999999;
+    --color-border: #3a3a3a;
+    --color-accent: #d62839;
+    --color-accent-hover: #c72e3b;
+}
+
 body{
     margin: 0;
-    font-family: system-ui, sans-serif;
-    font-size: 1rem;
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
     line-height: 1.5;
-    color: #eaeaea;
-    background-color: #1e1e1e;
+    color: var(--color-text);
+    background-color: var(--color-bg);
 }
 
 header{
@@ -20,14 +43,14 @@ header{
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
-    background-color: #262626;
+    background-color: var(--color-bg-panel);
     padding: 24px;
-    border-bottom: 1px solid #3a3a3a;
+    border-bottom: 1px solid var(--color-border);
 }
 
 header h1{
-    font-size: 1.5rem;
-    color: #ffffff;
+    font-size: var(--fs-h1);
+    color: var(--color-text-heading);
     margin: 0;
 }
 
@@ -46,13 +69,14 @@ section{
 }
 
 section h2{
-    font-size: 1.25rem;
-    color: #ffffff;
+    font-size: var(--fs-h2);
+    color: var(--color-text-heading);
     margin-bottom: 12px;
 }
 
 #note-form label {
   display: block;
+  font-size: var(--fs-small);
   margin-bottom: 6px;
 }
 
@@ -60,10 +84,10 @@ section h2{
 #note-form textarea {
   width: 100%;
   padding: 12px;
-  border: 1px solid #3a3a3a;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background-color: #2a2a2a;
-  color: #eaeaea;
+  background-color: var(--color-bg-panel-alt);
+  color: var(--color-text);
   margin-bottom: 16px;
 }
 
@@ -75,14 +99,14 @@ section h2{
   padding: 12px 24px;
   border: none;
   border-radius: 6px;
-  background-color: #d62839;
+  background-color: var(--color-accent);
   color: #ffffff;
   font-weight: 700;
   cursor: pointer;
 }
 
 #note-form button:hover {
-  background-color: #c72e3b;
+  background-color: var(--color-accent-hover);
 }
 
 .cards{
@@ -92,34 +116,71 @@ section h2{
 }
 
 article {
-  background-color: #262626;
+  background-color: var(--color-bg-panel-alt);
   padding: 16px;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
   margin-bottom: 12px;
-  max-height: 120px;
+  max-height: 140px;
   overflow: hidden;
 }
 
 article h3 {
-  margin: 0 0 8px;
-  color: #ffffff;
+  font-size: var(--fs-h3);
+  margin: 4px 0 6px;
+  color: var(--color-text-heading);
+}
+
+article p {
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* моноширинний шрифт для пароля - легше розрізнити символи */
+.note-content--password {
+    font-family: var(--font-mono);
+    letter-spacing: 1.5px;
+    background-color: var(--color-bg);
+    padding: 6px 10px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.note-category {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.note-category--general {
+    background-color: #3a3d40;
+    color: #d4d7da;
+}
+
+/* приглушений колір замість яскравого, щоб читалось як спокійно */
+.note-category--security {
+    background-color: #4a1f24;
+    color: #ffb3ba;
 }
 
 aside {
   max-width: 800px;
   margin: 0 auto 24px;
   padding: 20px;
-  background-color: #2f2f2f;
-  border-left: 4px solid #e63946;
+  background-color: var(--color-bg-aside);
+  border-left: 4px solid var(--color-accent);
   border-radius: 6px;
+  color: var(--color-text);
 }
 
 footer {
   padding: 16px;
   text-align: center;
-  font-size: 0.85rem;
-  color: #999999;
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
 }
 
 @media (min-width: 600px)
@@ -153,8 +214,8 @@ footer {
 
     aside{
         margin: 0;
+        max-width: none;
         position: sticky;
         top: 24px;
     }
 }
-

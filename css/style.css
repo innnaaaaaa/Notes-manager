@@ -95,6 +95,11 @@ section h2{
   min-height: 120px;
 }
 
+#char-counter.near-limit {
+    color: #e63946;
+    font-weight: 700;
+}
+
 #note-form button {
   padding: 12px 24px;
   border: none;

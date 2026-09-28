@@ -96,3 +96,59 @@ renderNotes(notes);
 
 // Оновлення підсумкового лічильника кількості нотаток
 notesCountEl.textContent = `Усього нотаток: ${notes.length}`;
+
+// Вибір форми
+const noteForm = document.querySelector('#note-form');
+const titleInput = document.querySelector('#note-title');
+const contentInput = document.querySelector('#note-content');
+const charCounter = document.querySelector('#char-counter');
+
+// Лічильник символів у полі введення нотатки
+contentInput.addEventListener('input', () => {
+    const maxLength = 300;
+    const currentLength = contentInput.value.length;
+
+    charCounter.textContent = `${currentLength} / ${maxLength}`;
+    charCounter.classList.toggle('near-limit', maxLength - currentLength <= 30);
+});
+
+// Обрабка форми
+noteForm.addEventListener('submit', event => {
+    // скасування перезавантаження сторінки
+    event.preventDefault();
+
+    // зчитування значення полів
+    const title = titleInput.value.trim();
+    const excerpt = contentInput.value.trim();
+
+    // Новий об'єкт та додавання його до масиву
+    notes.push({ title: title, category: 'Загальне', excerpt: excerpt });
+
+    // Оновлення рендеру та лічильника
+    renderNotes(notes);
+    notesCountEl.textContent = `Усього нотаток: ${notes.length}`;
+
+    // Очищення полів форми та лічильника символів
+    noteForm.reset();
+    charCounter.textContent = '0 / 300';
+    charCounter.classList.remove('near-limit');
+});
+
+// Вибір контейнера для перегляду нотатки (руга подія)
+const noteViewer = document.querySelector('aside');
+
+listContainer.addEventListener('click', event =>{
+    const clickedCard = event.target.closest('article');
+    if (!clickedCard){
+        return;
+    }
+    
+    const noteIndex = Number(clickedCard.dataset.id) - 1;
+    const clickedNote = notes[noteIndex];
+
+    noteViewer.innerHTML = `
+        <h2>Перегляд обраної нотатки</h2>
+        <h3>${clickedNote.title}</h3>
+        <p>${clickedNote.category}</p>
+    `;
+});

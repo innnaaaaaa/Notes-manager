@@ -48,3 +48,51 @@ const isStrongPassword = password => password.length >= 8;
 
 console.log(`Пароль "${testPassword}" надійний: ${isStrongPassword(testPassword)}`);
 console.log(`Пароль "abc" надійний: ${isStrongPassword('abc')}`);
+
+// Видаляємо всі статичні картки-приклади з практикуму 2
+document.querySelectorAll('.cards article').forEach(el => el.remove());
+
+// Вибір контейнера для динамічних карток нотаток
+const listContainer = document.querySelector('.cards');
+const notesCountEl = document.querySelector('#notes-count');
+
+// Присвоює кожній нотатці категорійний CSS-клас для візуального розрізнення
+function categoryToClass(category) {
+    if (category === 'Безпека'){
+        return 'note-category--security';
+    }
+    if (category === 'Навчання'){
+        return 'note-category--general';
+    }
+    if (category === 'Побут'){
+        return 'note-category--household';
+    }
+
+    return 'note-category--other';
+}
+
+// Рендерить список нотаток у контейнер на основі масиву даних
+function renderNotes(notesArray) {
+    listContainer.innerHTML = '';
+
+    notesArray.forEach((note, index) => {
+        const card = document.createElement('article');
+        const title = document.createElement('h3');
+        const category = document.createElement('p');
+
+        title.textContent = note.title;
+        category.textContent = note.category;
+
+        card.dataset.id = index + 1;
+        card.classList.add(categoryToClass(note.category));
+
+        card.append(title, category);
+        listContainer.append(card);
+    });
+}
+
+// Виклик рендеру з реальними даними при завантаженні сторінки
+renderNotes(notes);
+
+// Оновлення підсумкового лічильника кількості нотаток
+notesCountEl.textContent = `Усього нотаток: ${notes.length}`;

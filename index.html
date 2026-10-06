@@ -23,15 +23,16 @@
                         <input type="text" id="note-title" name="note-title" required>
 
                         <label for="note-content">Зміст:</label>
-                        <textarea id="note-content" name="note-content" required></textarea>
+                        <textarea id="note-content" name="note-content" required maxlength="300"></textarea>
+                        <p id="char-counter">0 / 300</p>
 
                         <button type="submit">Додати нотатку</button>
                     </form>
                 </section>
 
                 <section id="notes-list">
-                    <h2>Мої нотатки</h2>
                     <p id="notes-count"></p>
+                    <h2>Мої нотатки</h2>
                     <div class="cards">
                         <article>
                             <span class="note-category note-category--general">Навчання</span>

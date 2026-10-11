@@ -74,14 +74,14 @@ section h2{
     margin-bottom: 12px;
 }
 
-#note-form label {
+/* форма: підписи та поля */
+.form-label {
   display: block;
   font-size: var(--fs-small);
   margin-bottom: 6px;
 }
 
-#note-form input,
-#note-form textarea {
+.form-control {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--color-border);
@@ -91,16 +91,17 @@ section h2{
   margin-bottom: 16px;
 }
 
-#char-counter.near-limit {
+.form-control--textarea {
+  min-height: 120px;
+}
+
+.char-counter.near-limit {
     color: #e63946;
     font-weight: 700;
 }
 
-#note-form textarea {
-  min-height: 120px;
-}
-
-#note-form button {
+/* кнопка */
+.btn {
   padding: 12px 24px;
   border: none;
   border-radius: 6px;
@@ -110,7 +111,7 @@ section h2{
   cursor: pointer;
 }
 
-#note-form button:hover {
+.btn:hover {
   background-color: var(--color-accent-hover);
 }
 
@@ -120,23 +121,24 @@ section h2{
     gap: 12px;
 }
 
-article {
+/* картка нотатки */
+.note-card {
   background-color: var(--color-bg-panel-alt);
   padding: 16px;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
   margin-bottom: 12px;
-  max-height: 140px;
-  overflow: hidden;
+  cursor: pointer;
+  align-self: start;
 }
 
-article h3 {
+.note-card h3 {
   font-size: var(--fs-h3);
   margin: 4px 0 6px;
   color: var(--color-text-heading);
 }
 
-article p {
+.note-card p {
   color: var(--color-text);
   margin: 0;
 }

@@ -19,14 +19,14 @@
                 <section id="new-note">
                     <h2>Нова нотатка</h2>
                     <form id="note-form">
-                        <label for="note-title">Заголовок:</label>
-                        <input type="text" id="note-title" name="note-title" required>
+                        <label class="form-label" for="note-title">Заголовок:</label>
+                        <input class="form-control" type="text" id="note-title" name="note-title" required>
 
-                        <label for="note-content">Зміст:</label>
-                        <textarea id="note-content" name="note-content" required maxlength="300"></textarea>
-                        <p id="char-counter">0 / 300</p>
+                        <label class="form-label" for="note-content">Зміст:</label>
+                        <textarea class="form-control form-control--textarea" id="note-content" name="note-content" required maxlength="300"></textarea>
+                        <p id="char-counter" class="char-counter">0 / 300</p>
 
-                        <button type="submit">Додати нотатку</button>
+                        <button class="btn" type="submit">Додати нотатку</button>
                     </form>
                 </section>
 
@@ -34,13 +34,13 @@
                     <p id="notes-count"></p>
                     <h2>Мої нотатки</h2>
                     <div class="cards">
-                        <article>
+                        <article class="note-card">
                             <span class="note-category note-category--general">Навчання</span>
                             <h3>Нотатки з лекції</h3>
                             <p>Бази даних, PostgreSQL</p>
                         </article>
 
-                        <article>
+                        <article class="note-card">
                             <span class="note-category note-category--security">Паролі</span>
                             <h3>Пароль від Wifi</h3>
                             <p class="note-content--password">12345678</p>

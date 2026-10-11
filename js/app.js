@@ -1,3 +1,5 @@
+// ===== Практикум 6: основи JavaScript =====
+
 // перевірка підключення файлу
 console.log('app.js підключено');
 
@@ -49,8 +51,10 @@ const isStrongPassword = password => password.length >= 8;
 console.log(`Пароль "${testPassword}" надійний: ${isStrongPassword(testPassword)}`);
 console.log(`Пароль "abc" надійний: ${isStrongPassword('abc')}`);
 
+// ===== Практикум 7: маніпуляція DOM =====
+
 // Видаляємо всі статичні картки-приклади з практикуму 2
-document.querySelectorAll('.cards article').forEach(el => el.remove());
+document.querySelectorAll('.cards .note-card').forEach(el => el.remove());
 
 // Вибір контейнера для динамічних карток нотаток
 const listContainer = document.querySelector('.cards');
@@ -84,7 +88,7 @@ function renderNotes(notesArray) {
         category.textContent = note.category;
 
         card.dataset.id = index + 1;
-        card.classList.add(categoryToClass(note.category));
+        card.classList.add('note-card', categoryToClass(note.category));
 
         card.append(title, category);
         listContainer.append(card);
@@ -96,6 +100,8 @@ renderNotes(notes);
 
 // Оновлення підсумкового лічильника кількості нотаток
 notesCountEl.textContent = `Усього нотаток: ${notes.length}`;
+
+// ===== Практикум 8: події, форма, валідація =====
 
 // Вибір форми та її елементів
 const noteForm = document.querySelector('#note-form');
@@ -112,7 +118,7 @@ contentInput.addEventListener('input', () => {
     charCounter.classList.toggle('near-limit', MAXLENGTH - currentLength <= 30);
 });
 
-// Додаткова валідація поле не має складатися лише з пробілів
+// Додаткова валідація: поле не має складатися лише з пробілів
 function checkNotBlank(input, message) {
     const isBlank = input.value !== '' && input.value.trim() === '';
     input.setCustomValidity(isBlank ? message : '');
@@ -153,7 +159,7 @@ noteForm.addEventListener('submit', event => {
 const noteViewer = document.querySelector('aside');
 
 listContainer.addEventListener('click', event => {
-    const clickedCard = event.target.closest('article');
+    const clickedCard = event.target.closest('.note-card');
     if (!clickedCard) {
         return;
     }

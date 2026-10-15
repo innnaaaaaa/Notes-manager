@@ -1,5 +1,3 @@
-// ===== Практикум 6: основи JavaScript =====
-
 // перевірка підключення файлу
 console.log('app.js підключено');
 
@@ -51,8 +49,6 @@ const isStrongPassword = password => password.length >= 8;
 console.log(`Пароль "${testPassword}" надійний: ${isStrongPassword(testPassword)}`);
 console.log(`Пароль "abc" надійний: ${isStrongPassword('abc')}`);
 
-// ===== Практикум 7: маніпуляція DOM =====
-
 // Видаляємо всі статичні картки-приклади з практикуму 2
 document.querySelectorAll('.cards .note-card').forEach(el => el.remove());
 
@@ -75,6 +71,25 @@ function categoryToClass(category) {
     return 'note-category--other';
 }
 
+// Створює SVG-іконку замка для нотаток категорії «Безпека»
+function createLockIcon() {
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'note-category-icon');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('width', '12');
+    svg.setAttribute('height', '12');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+
+    const path = document.createElementNS(NS, 'path');
+    path.setAttribute('fill', 'currentColor');
+    path.setAttribute('d', 'M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z');
+
+    svg.append(path);
+    return svg;
+}
+
 // Рендерить список нотаток у контейнер на основі масиву даних
 function renderNotes(notesArray) {
     listContainer.innerHTML = '';
@@ -86,6 +101,11 @@ function renderNotes(notesArray) {
 
         title.textContent = note.title;
         category.textContent = note.category;
+
+        // іконка замка для нотаток категорії «Безпека»
+        if (note.category === 'Безпека') {
+            category.prepend(createLockIcon());
+        }
 
         card.dataset.id = index + 1;
         card.classList.add('note-card', categoryToClass(note.category));
@@ -100,8 +120,6 @@ renderNotes(notes);
 
 // Оновлення підсумкового лічильника кількості нотаток
 notesCountEl.textContent = `Усього нотаток: ${notes.length}`;
-
-// ===== Практикум 8: події, форма, валідація =====
 
 // Вибір форми та її елементів
 const noteForm = document.querySelector('#note-form');
@@ -118,7 +136,7 @@ contentInput.addEventListener('input', () => {
     charCounter.classList.toggle('near-limit', MAXLENGTH - currentLength <= 30);
 });
 
-// Додаткова валідація: поле не має складатися лише з пробілів
+// Додаткова валідація поле не має складатися лише з пробілів
 function checkNotBlank(input, message) {
     const isBlank = input.value !== '' && input.value.trim() === '';
     input.setCustomValidity(isBlank ? message : '');

@@ -100,7 +100,7 @@ section h2{
     font-weight: 700;
 }
 
-/* кнопка */
+/* кнопки */
 .btn {
   padding: 12px 24px;
   border: none;
@@ -171,6 +171,14 @@ section h2{
 .note-category--security {
     background-color: #4a1f24;
     color: #ffb3ba;
+}
+
+/* іконка замка: колір береться з тексту через currentColor */
+.note-category-icon {
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+    vertical-align: -1px;
 }
 
 aside {

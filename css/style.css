@@ -115,6 +115,40 @@ section h2{
   background-color: var(--color-accent-hover);
 }
 
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* другорядна кнопка (оновлення даних з API) */
+.btn--secondary {
+    display: inline-block;
+    margin-bottom: 16px;
+    padding: 8px 16px;
+    background-color: var(--color-bg-panel-alt);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    font-size: var(--fs-small);
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.btn--secondary:hover {
+    background-color: var(--color-border);
+}
+
+.error-message {
+    color: var(--color-accent);
+    background-color: var(--color-bg-panel-alt);
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-top: 12px;
+}
+
+.error-message[hidden] {
+    display: none;
+}
+
 .cards{
     display: grid;
     grid-template-columns: 1fr;

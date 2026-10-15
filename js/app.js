@@ -72,6 +72,7 @@ function categoryToClass(category) {
 }
 
 // Створює SVG-іконку замка для нотаток категорії «Безпека»
+// (createElementNS замість innerHTML: розмітка будується безпечно, без рядків HTML)
 function createLockIcon() {
     const NS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(NS, 'svg');
@@ -196,3 +197,65 @@ listContainer.addEventListener('click', event => {
 
     noteViewer.replaceChildren(heading, title, category, text);
 });
+
+// API: JSONPlaceholder (https://jsonplaceholder.typicode.com), без ключа
+const API_URL = 'https://jsonplaceholder.typicode.com/posts?userId=1';
+
+const refreshBtn = document.querySelector('#refresh-btn');
+const errorMessageEl = document.querySelector('#error-message');
+
+// Блокує кнопку й змінює її текст під час запиту
+function showLoading(isLoading) {
+    refreshBtn.disabled = isLoading;
+    refreshBtn.textContent = isLoading ? 'Завантаження...' : 'Оновити дані з API';
+}
+
+// Показує або ховає зрозуміле повідомлення про помилку
+function showError(message) {
+    if (message) {
+        errorMessageEl.textContent = message;
+        errorMessageEl.hidden = false;
+    } else {
+        errorMessageEl.hidden = true;
+    }
+}
+
+// Завантажує нотатки з API, показує стан завантаження та помилку
+async function loadData() {
+    showLoading(true);
+    showError('');
+
+    try {
+        const response = await fetch(API_URL);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Завантажені дані з API:', data);
+
+        const apiNotes = data.map(post => ({
+            title: post.title,
+            category: 'API',
+            excerpt: post.body
+        }));
+
+        // оновлюємо сам масив notes, щоб data-id збігалися з обробником кліку
+        notes.length = 0;
+        notes.push(...apiNotes);
+
+        renderNotes(notes);
+        notesCountEl.textContent = `Усього нотаток: ${notes.length}`;
+    } catch (error) {
+        showError('Нотатки недоступні офлайн');
+        console.error('Error fetching data:', error);
+    } finally {
+        showLoading(false);
+    }
+}
+
+refreshBtn.addEventListener('click', loadData);
+
+// перше завантаження при відкритті сторінки
+loadData();

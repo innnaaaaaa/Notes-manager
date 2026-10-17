@@ -1,261 +1,140 @@
-// перевірка підключення файлу
 console.log('app.js підключено');
-
-// дані варіанта - масив нотаток з назвою й категорією
-const notes = [
-    { title: 'Нотатки з лекції', category: 'Навчання', excerpt: 'Бази даних, PostgreSQL' },
-    { title: 'Пароль від Wifi', category: 'Безпека', excerpt: '12345678' },
-    { title: 'Список покупок', category: 'Побут', excerpt: 'Молоко, хліб, яйця' },
-    { title: 'Ідеї для проєкту', category: 'Навчання', excerpt: 'Додаток для нотаток з категоріями' },
-    { title: 'Пароль від пошти', category: 'Безпека', excerpt: 'qwerty2026!' },
-];
-
-// підраховує та виводить у консоль кількість нотаток у кожній категорії
-function countByCategory(notesArray) {
-    const counts = {};
-
-    for (const note of notesArray) {
-        const category = note.category;
-
-        if (counts[category] === undefined) {
-            counts[category] = 1;
-        } else {
-            counts[category] += 1;
-        }
-    }
-
-    for (const category of Object.keys(counts)) {
-        console.log(`${category}: ${counts[category]} нотаток`);
-    }
-
-    return counts;
-}
-
-// виклик функції обробки циклом
-countByCategory(notes);
-
-// умовна перевірка жорстко заданого пароля
-const testPassword = '12345678';
-
-if (testPassword.length < 8) {
-    console.log('Попередження: пароль занадто короткий!');
-} else {
-    console.log('Довжина пароля прийнятна.');
-}
-
-// стрілкова функція - перевіряє, чи пароль достатньо надійний
-const isStrongPassword = password => password.length >= 8;
-
-console.log(`Пароль "${testPassword}" надійний: ${isStrongPassword(testPassword)}`);
-console.log(`Пароль "abc" надійний: ${isStrongPassword('abc')}`);
-
-// Видаляємо всі статичні картки-приклади з практикуму 2
-document.querySelectorAll('.cards .note-card').forEach(el => el.remove());
-
-// Вибір контейнера для динамічних карток нотаток
-const listContainer = document.querySelector('.cards');
-const notesCountEl = document.querySelector('#notes-count');
-
-// Присвоює кожній нотатці категорійний CSS-клас для візуального розрізнення
-function categoryToClass(category) {
-    if (category === 'Безпека'){
-        return 'note-category--security';
-    }
-    if (category === 'Навчання'){
-        return 'note-category--general';
-    }
-    if (category === 'Побут'){
-        return 'note-category--household';
-    }
-
-    return 'note-category--other';
-}
-
-// Створює SVG-іконку замка для нотаток категорії «Безпека»
-// (createElementNS замість innerHTML: розмітка будується безпечно, без рядків HTML)
-function createLockIcon() {
-    const NS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(NS, 'svg');
-    svg.setAttribute('class', 'note-category-icon');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('width', '12');
-    svg.setAttribute('height', '12');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.setAttribute('focusable', 'false');
-
-    const path = document.createElementNS(NS, 'path');
-    path.setAttribute('fill', 'currentColor');
-    path.setAttribute('d', 'M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z');
-
-    svg.append(path);
-    return svg;
-}
-
-// Рендерить список нотаток у контейнер на основі масиву даних
-function renderNotes(notesArray) {
-    listContainer.innerHTML = '';
-
-    notesArray.forEach((note, index) => {
-        const card = document.createElement('article');
-        const title = document.createElement('h3');
-        const category = document.createElement('p');
-
-        title.textContent = note.title;
-        category.textContent = note.category;
-
-        // іконка замка для нотаток категорії «Безпека»
-        if (note.category === 'Безпека') {
-            category.prepend(createLockIcon());
-        }
-
-        card.dataset.id = index + 1;
-        card.classList.add('note-card', categoryToClass(note.category));
-
-        card.append(title, category);
-        listContainer.append(card);
-    });
-}
-
-// Виклик рендеру з реальними даними при завантаженні сторінки
-renderNotes(notes);
-
-// Оновлення підсумкового лічильника кількості нотаток
-notesCountEl.textContent = `Усього нотаток: ${notes.length}`;
-
-// Вибір форми та її елементів
-const noteForm = document.querySelector('#note-form');
-const titleInput = document.querySelector('#note-title');
-const contentInput = document.querySelector('#note-content');
-const charCounter = document.querySelector('#char-counter');
-const MAXLENGTH = 300;
-
-// Лічильник символів при наближенні до ліміту змінює колір (клас near-limit)
-contentInput.addEventListener('input', () => {
-    const currentLength = contentInput.value.length;
-
-    charCounter.textContent = `${currentLength} / ${MAXLENGTH}`;
-    charCounter.classList.toggle('near-limit', MAXLENGTH - currentLength <= 30);
-});
-
-// Додаткова валідація поле не має складатися лише з пробілів
-function checkNotBlank(input, message) {
-    const isBlank = input.value !== '' && input.value.trim() === '';
-    input.setCustomValidity(isBlank ? message : '');
-}
-
-titleInput.addEventListener('input', () => {
-    checkNotBlank(titleInput, 'Заголовок не може складатися лише з пробілів');
-});
-
-contentInput.addEventListener('input', () => {
-    checkNotBlank(contentInput, 'Текст нотатки не може складатися лише з пробілів');
-});
-
-// Обробка надсилання форми без перезавантаження сторінки
-noteForm.addEventListener('submit', event => {
-    // скасування перезавантаження сторінки
-    event.preventDefault();
-
-    // отримання значень полів форми
-    const title = titleInput.value.trim();
-    const excerpt = contentInput.value.trim();
-
-    // новий об'єкт у форматі масиву notes + поле excerpt
-    notes.push({ title: title, category: 'Загальне', excerpt: excerpt });
-
-    // повторний рендер списку нотаток після додавання нової
-    renderNotes(notes);
-    notesCountEl.textContent = `Усього нотаток: ${notes.length}`;
-
-    // очищення форми та скидання лічильника символів
-    noteForm.reset();
-    charCounter.textContent = `0 / ${MAXLENGTH}`;
-    charCounter.classList.remove('near-limit');
-});
-
-// Друга подія: делегування кліку на контейнері списку.
-// Показує повний текст обраної нотатки в aside (через textContent, безпечно).
-const noteViewer = document.querySelector('aside');
-
-listContainer.addEventListener('click', event => {
-    const clickedCard = event.target.closest('.note-card');
-    if (!clickedCard) {
-        return;
-    }
-
-    const clickedNote = notes[Number(clickedCard.dataset.id) - 1];
-
-    const heading = document.createElement('h2');
-    const title = document.createElement('h3');
-    const category = document.createElement('p');
-    const text = document.createElement('p');
-
-    heading.textContent = 'Перегляд обраної нотатки';
-    title.textContent = clickedNote.title;
-    category.textContent = clickedNote.category;
-    text.textContent = clickedNote.excerpt || 'Текст для цієї нотатки не додано.';
-
-    noteViewer.replaceChildren(heading, title, category, text);
-});
 
 // API: JSONPlaceholder (https://jsonplaceholder.typicode.com), без ключа
 const API_URL = 'https://jsonplaceholder.typicode.com/posts?userId=1';
 
-const refreshBtn = document.querySelector('#refresh-btn');
-const errorMessageEl = document.querySelector('#error-message');
+// Обраний фреймворк: Vue 3 - працює через один <script> з CDN без Babel/JSX
 
-// Блокує кнопку й змінює її текст під час запиту
-function showLoading(isLoading) {
-    refreshBtn.disabled = isLoading;
-    refreshBtn.textContent = isLoading ? 'Завантаження...' : 'Оновити дані з API';
-}
+// Ручний DOM-код (renderNotes, categoryToClass, showLoading, showError та обробники
+// з querySelector/innerHTML із практикумів 7-9) - замінено компонентом NoteCard
+// і реактивним станом Vue.
 
-// Показує або ховає зрозуміле повідомлення про помилку
-function showError(message) {
-    if (message) {
-        errorMessageEl.textContent = message;
-        errorMessageEl.hidden = false;
-    } else {
-        errorMessageEl.hidden = true;
-    }
-}
+const NoteCard = {
+    props: ['title', 'excerpt', 'category'],
+    emits: ['select'],
 
-// Завантажує нотатки з API, показує стан завантаження та помилку
-async function loadData() {
-    showLoading(true);
-    showError('');
+    // Локальний реактивний прапорець: розгорнуто чи згорнуто текст
+    data() {
+        return { expanded: false };
+    },
 
-    try {
-        const response = await fetch(API_URL);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+    computed: {
+        // похідне значення: скорочений текст, коли нотатка згорнута
+        preview() {
+            return this.excerpt.length > 40
+                ? this.excerpt.slice(0, 40) + '…'
+                : this.excerpt;
+        },
+        categoryClass() {
+            const map = {
+                'Безпека': 'note-category--security',
+                'Навчання': 'note-category--general',
+                'Побут': 'note-category--household',
+            };
+            return map[this.category] || 'note-category--other';
+        },
+        isPassword() {
+            return this.category === 'Безпека';
         }
+    },
 
-        const data = await response.json();
-        console.log('Завантажені дані з API:', data);
+    methods: {
+        onClick() {
+            this.expanded = !this.expanded; // Vue сам перемалює картку
+            this.$emit('select');           // повідомляємо батьківський компонент для aside
+        }
+    },
 
-        const apiNotes = data.map(post => ({
-            title: post.title,
-            category: 'API',
-            excerpt: post.body
-        }));
+    template: `
+        <article class="note-card" :class="{ expanded: expanded }" @click="onClick">
+            <span class="note-category" :class="categoryClass">
+                <svg v-if="isPassword" class="note-category-icon" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z"/></svg>
+                {{ category }}
+            </span>
+            <h3>{{ title }}</h3>
+            <p :class="{ 'note-content--password': isPassword }">
+                {{ expanded ? excerpt : preview }}
+            </p>
+        </article>
+    `
+};
 
-        // оновлюємо сам масив notes, щоб data-id збігалися з обробником кліку
-        notes.length = 0;
-        notes.push(...apiNotes);
+Vue.createApp({
+    components: { NoteCard },
 
-        renderNotes(notes);
-        notesCountEl.textContent = `Усього нотаток: ${notes.length}`;
-    } catch (error) {
-        showError('Нотатки недоступні офлайн');
-        console.error('Error fetching data:', error);
-    } finally {
-        showLoading(false);
+    // Дані - у реактивному стані, а не у звичайній зовнішній змінній
+    data() {
+        return {
+            maxLength: 300,
+            nextId: 6,
+            notes: [
+                { id: 1, title: 'Нотатки з лекції', category: 'Навчання', excerpt: 'Бази даних, PostgreSQL: таблиці, первинні та зовнішні ключі, базові запити SELECT/INSERT.' },
+                { id: 2, title: 'Пароль від Wifi', category: 'Безпека', excerpt: '12345678' },
+                { id: 3, title: 'Список покупок', category: 'Побут', excerpt: 'Молоко, хліб, яйця, сир, яблука, кава, мило.' },
+                { id: 4, title: 'Ідеї для проєкту', category: 'Навчання', excerpt: 'Додаток для нотаток із категоріями, пошуком і синхронізацією через API.' },
+                { id: 5, title: 'Пароль від пошти', category: 'Безпека', excerpt: 'qwerty2026!' },
+            ],
+            newTitle: '',
+            newContent: '',
+            selectedNote: null,
+            loading: false,
+            error: ''
+        };
+    },
+
+    computed: {
+        // похідні значення - перераховуються автоматично
+        charsCount() {
+            return this.newContent.length;
+        },
+        nearLimit() {
+            return this.maxLength - this.charsCount <= 30;
+        }
+    },
+
+    methods: {
+        addNote() {
+            // новий об'єкт з унікальним id додається до реактивного масиву
+            this.notes.push({
+                id: this.nextId++,
+                title: this.newTitle,
+                category: 'Загальне',
+                excerpt: this.newContent.trim()
+            });
+            this.newTitle = '';
+            this.newContent = '';
+        },
+
+        async loadData() {
+            this.loading = true;
+            this.error = '';
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                console.log('Завантажені дані з API:', data);
+
+                // лишаємо власні нотатки, замінюємо лише попередні дані з API
+                const apiNotes = data.map(post => ({
+                    id: 'api-' + post.id,
+                    title: post.title,
+                    category: 'API',
+                    excerpt: post.body,
+                    fromApi: true
+                }));
+                this.notes = this.notes.filter(n => !n.fromApi).concat(apiNotes);
+            } catch (err) {
+                this.error = 'Нотатки недоступні офлайн';
+                console.error('Error fetching data:', err);
+            } finally {
+                this.loading = false;
+            }
+        }
+    },
+
+    mounted() {
+        this.loadData();
     }
-}
-
-refreshBtn.addEventListener('click', loadData);
-
-// перше завантаження при відкритті сторінки
-loadData();
+}).mount('#app');

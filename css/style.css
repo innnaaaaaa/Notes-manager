@@ -177,6 +177,11 @@ section h2{
   margin: 0;
 }
 
+/* розгорнута нотатка (локальний стан expanded у NoteCard) */
+.note-card.expanded {
+  outline: 1px solid var(--color-accent);
+}
+
 /* моноширинний шрифт для пароля - легше розрізнити символи */
 .note-content--password {
     font-family: var(--font-mono);
@@ -199,6 +204,16 @@ section h2{
 .note-category--general {
     background-color: #3a3d40;
     color: #d4d7da;
+}
+
+.note-category--household {
+    background-color: #2e3d2f;
+    color: #b9e3bc;
+}
+
+.note-category--other {
+    background-color: #33384a;
+    color: #c5cbe6;
 }
 
 /* приглушений колір замість яскравого, щоб читалось як спокійно */

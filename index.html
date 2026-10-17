@@ -1,67 +1,71 @@
 <!DOCTYPE html>
 <html lang="uk">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Менеджер нотаток</title>
-        <link rel="stylesheet" href="css/style.css">
-        <script src="js/app.js" defer></script>
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Менеджер нотаток</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="js/app.js" defer></script>
+</head>
 
-    <body>
-        <header>
-            <h1>Менеджер нотаток</h1>
-        </header>
+<body>
+    <header>
+        <h1>Менеджер нотаток</h1>
+    </header>
 
+    <div id="app">
         <div class="layout">
             <main>
-
                 <section id="new-note">
                     <h2>Нова нотатка</h2>
-                    <form id="note-form">
+                    <form id="note-form" @submit.prevent="addNote">
                         <label class="form-label" for="note-title">Заголовок:</label>
-                        <input class="form-control" type="text" id="note-title" name="note-title" required>
+                        <input class="form-control" type="text" id="note-title" v-model.trim="newTitle" required>
 
                         <label class="form-label" for="note-content">Зміст:</label>
-                        <textarea class="form-control form-control--textarea" id="note-content" name="note-content" required maxlength="300"></textarea>
-                        <p id="char-counter" class="char-counter">0 / 300</p>
+                        <textarea class="form-control form-control--textarea" id="note-content" v-model="newContent" required maxlength="300"></textarea>
+                        <p id="char-counter" class="char-counter" :class="{ 'near-limit': nearLimit }">{{ charsCount }} / {{ maxLength }}</p>
 
                         <button class="btn" type="submit">Додати нотатку</button>
                     </form>
                 </section>
 
                 <section id="notes-list">
-                    <p id="notes-count"></p>
+                    <p id="notes-count">Усього нотаток: {{ notes.length }}</p>
                     <h2>Мої нотатки</h2>
-                    <p id="error-message" class="error-message" hidden></p>
-                    <button id="refresh-btn" class="btn btn--secondary">Оновити дані з API</button>
-                    <div class="cards">
-                        <article class="note-card">
-                            <span class="note-category note-category--general">Навчання</span>
-                            <h3>Нотатки з лекції</h3>
-                            <p>Бази даних, PostgreSQL</p>
-                        </article>
+                    <button id="refresh-btn" class="btn btn--secondary" :disabled="loading" @click="loadData">
+                        {{ loading ? 'Завантаження...' : 'Оновити дані з API' }}
+                    </button>
+                    <p class="error-message" v-if="error">{{ error }}</p>
 
-                        <article class="note-card">
-                            <span class="note-category note-category--security">
-                                <svg class="note-category-icon" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z"/></svg>
-                                Паролі
-                            </span>
-                            <h3>Пароль від Wifi</h3>
-                            <p class="note-content--password">12345678</p>
-                        </article>
+                    <div class="cards">
+                        <note-card
+                            v-for="note in notes"
+                            :key="note.id"
+                            :title="note.title"
+                            :excerpt="note.excerpt"
+                            :category="note.category"
+                            @select="selectedNote = note">
+                        </note-card>
                     </div>
                 </section>
-
             </main>
 
             <aside>
                 <h2>Перегляд обраної нотатки</h2>
+                <template v-if="selectedNote">
+                    <h3>{{ selectedNote.title }}</h3>
+                    <p>{{ selectedNote.category }}</p>
+                    <p>{{ selectedNote.excerpt }}</p>
+                </template>
+                <p v-else>Натисніть на нотатку, щоб переглянути її тут.</p>
             </aside>
         </div>
+    </div>
 
-        <footer>
-            <p>&copy; 2026 Менеджер нотаток. Розроблений в межах дисципліни "Програмування веб-застосунків".</p>
-        </footer>
-    </body>
+    <footer>
+        <p>&copy; 2026 Менеджер нотаток. Розроблений в межах дисципліни "Програмування веб-застосунків".</p>
+    </footer>
+</body>
 </html>

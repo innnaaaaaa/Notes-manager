@@ -37,10 +37,12 @@
                 <section id="notes-list">
                     <p id="notes-count">Усього нотаток: {{ notes.length }}</p>
                     <h2>Мої нотатки</h2>
-                    <button id="refresh-btn" class="btn btn--secondary" type="button" :disabled="loading" @click="loadData">
+                    <button id="refresh-btn" class="btn btn--secondary" :disabled="loading" @click="loadData">
                         {{ loading ? 'Завантаження...' : 'Оновити дані з API' }}
                     </button>
+                    <p class="error-message" v-if="dbError">{{ dbError }}</p>
                     <p class="error-message" v-if="error">{{ error }}</p>
+                    <p class="empty-message" v-if="notes.length === 0">Нотаток поки немає. Додайте першу за допомогою форми.</p>
 
                     <div class="cards">
                         <note-card

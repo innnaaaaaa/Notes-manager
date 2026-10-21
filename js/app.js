@@ -5,7 +5,7 @@ const STORAGE_KEY = 'notes';
 // API: JSONPlaceholder (https://jsonplaceholder.typicode.com), без ключа
 const API_URL = 'https://jsonplaceholder.typicode.com/posts?userId=1';
 
-// Початкові тестові нотатки
+// Початкові тестові нотатки (вигадані дані: реальні паролі не зберігаємо)
 const defaultNotes = [
     { id: 1, title: 'Нотатки з лекції', category: 'Навчання', text: 'Бази даних, PostgreSQL: таблиці, первинні та зовнішні ключі, базові запити SELECT/INSERT.' },
     { id: 2, title: 'Пароль від Wifi', category: 'Безпека', text: '12345678' },
@@ -14,7 +14,9 @@ const defaultNotes = [
     { id: 5, title: 'Пароль від пошти', category: 'Безпека', text: 'qwerty2026!' },
 ];
 
-// Зберігає масив нотаток у localStorage
+// localStorage
+
+// Зберігає масив нотаток у localStorage (об'єкти перетворюються в рядок JSON)
 function saveToLocalStorage(items) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
 }
@@ -29,6 +31,100 @@ function loadFromLocalStorage() {
         console.error('Пошкоджені дані в localStorage:', error);
         return [];
     }
+}
+
+// IndexedDB
+
+const DB_NAME = 'NotesDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'notes';
+let dbPromise = null;
+
+// Відкриває базу і кешує з'єднання
+function openDB() {
+    if (!dbPromise) {
+        dbPromise = new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+            // викликається лише при створенні бази або підвищенні версії
+            request.onupgradeneeded = event => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                }
+            };
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+    return dbPromise;
+}
+
+// Додає нотатку або оновлює наявну з тим самим id
+async function addItem(item) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(item);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+    });
+}
+
+// Оновлення нотатки: put із тим самим id замінює запис, дубліката не створюється
+async function updateItem(item) {
+    return addItem(item);
+}
+
+// Повертає всі нотатки зі сховища
+async function getAllItems() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const request = tx.objectStore(STORE_NAME).getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+// Видаляє нотатки за списком id в одній транзакції
+async function deleteItems(ids) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        ids.forEach(id => store.delete(id));
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+    });
+}
+
+// Видаляє одну нотатку
+async function deleteItem(id) {
+    return deleteItems([id]);
+}
+
+// Одноразова міграція: переносить нотатки з localStorage в порожнє сховище IndexedDB
+async function migrateFromLocalStorage() {
+    if (localStorage.getItem('migrated') === 'true') {
+        return;
+    }
+
+    const existing = await getAllItems();
+    const oldItems = loadFromLocalStorage();
+
+    if (existing.length === 0 && oldItems.length > 0) {
+        for (const item of oldItems) {
+            await addItem(item);
+        }
+        console.log(`Мігровано нотаток із localStorage в IndexedDB: ${oldItems.length}`);
+    }
+
+    // прапорець, щоб міграція не повторювалась при наступних запусках
+    localStorage.setItem('migrated', 'true');
 }
 
 // Компонент однієї нотатки. Дані отримує через props, а про дії повідомляє подіями.
@@ -95,6 +191,7 @@ Vue.createApp({
             newContent: '',
             editingId: null,
             selectedNote: null,
+            dbAvailable: true,
             loading: false,
             error: '',
             dbError: ''
@@ -111,9 +208,17 @@ Vue.createApp({
     },
 
     methods: {
-        // Зберігає поточний масив нотаток у localStorage
-        persist() {
-            saveToLocalStorage(this.notes);
+        // Виконує операцію з IndexedDB; при помилці показує зрозуміле повідомлення
+        async persist(operation) {
+            if (!this.dbAvailable) {
+                return;
+            }
+            try {
+                await operation();
+            } catch (err) {
+                console.error('Помилка IndexedDB:', err);
+                this.dbError = 'Не вдалося зберегти зміни в локальній базі даних.';
+            }
         },
 
         // Наступний вільний числовий id
@@ -121,8 +226,8 @@ Vue.createApp({
             return this.notes.reduce((max, n) => (typeof n.id === 'number' ? Math.max(max, n.id) : max), 0) + 1;
         },
 
-        // Додає нову нотатку або зберігає зміни в редагованій
-        saveNote() {
+        // Додає нову нотатку або оновлює редаговану
+        async saveNote() {
             const title = this.newTitle;
             const text = this.newContent.trim();
             if (!title || !text) {
@@ -130,15 +235,20 @@ Vue.createApp({
             }
 
             if (this.editingId !== null) {
-                this.notes = this.notes.map(n => (n.id === this.editingId ? { ...n, title, text } : n));
-                if (this.selectedNote && this.selectedNote.id === this.editingId) {
-                    this.selectedNote = this.notes.find(n => n.id === this.editingId);
+                const current = this.notes.find(n => n.id === this.editingId);
+                // звичайний об'єкт: IndexedDB не може клонувати реактивний Proxy Vue
+                const updated = { ...current, title, text };
+                this.notes = this.notes.map(n => (n.id === updated.id ? updated : n));
+                if (this.selectedNote && this.selectedNote.id === updated.id) {
+                    this.selectedNote = updated;
                 }
+                await this.persist(() => updateItem(updated));
             } else {
-                this.notes.push({ id: this.nextId(), title, category: 'Загальне', text });
+                const note = { id: this.nextId(), title, category: 'Загальне', text };
+                this.notes.push(note);
+                await this.persist(() => addItem(note));
             }
 
-            this.persist();
             this.cancelEdit();
         },
 
@@ -157,8 +267,8 @@ Vue.createApp({
             this.newContent = '';
         },
 
-        // Видаляє нотатку
-        removeNote(note) {
+        // Видаляє нотатку зі списку та зі сховища
+        async removeNote(note) {
             this.notes = this.notes.filter(n => n.id !== note.id);
             if (this.selectedNote && this.selectedNote.id === note.id) {
                 this.selectedNote = null;
@@ -166,7 +276,7 @@ Vue.createApp({
             if (this.editingId === note.id) {
                 this.cancelEdit();
             }
-            this.persist();
+            await this.persist(() => deleteItem(note.id));
         },
 
         // Завантажує нотатки з API
@@ -188,25 +298,50 @@ Vue.createApp({
                     fromApi: true
                 }));
 
+                const oldApiIds = this.notes.filter(n => n.fromApi).map(n => n.id);
                 this.notes = this.notes.filter(n => !n.fromApi).concat(apiNotes);
-                this.persist();
+
+                await this.persist(async () => {
+                    await deleteItems(oldApiIds);
+                    for (const item of apiNotes) {
+                        await addItem(item);
+                    }
+                });
             } catch (err) {
                 this.error = 'Нотатки недоступні офлайн';
                 console.error('Error fetching data:', err);
             } finally {
                 this.loading = false;
             }
+        },
+
+        // Початкове завантаження: міграція, читання з IndexedDB, перший запуск
+        async init() {
+            try {
+                await migrateFromLocalStorage();
+                let items = await getAllItems();
+
+                if (items.length === 0 && localStorage.getItem('notesSeeded') !== 'true') {
+                    for (const note of defaultNotes) {
+                        await addItem({ ...note });
+                    }
+                    localStorage.setItem('notesSeeded', 'true');
+                    items = await getAllItems();
+                }
+
+                this.notes = items;
+            } catch (err) {
+                // IndexedDB недоступна: працюємо лише в пам'яті
+                console.error('Не вдалося відкрити IndexedDB:', err);
+                this.dbAvailable = false;
+                this.dbError = 'Локальна база даних (IndexedDB) недоступна: зміни не збережуться після перезавантаження сторінки.';
+                this.notes = defaultNotes.map(n => ({ ...n }));
+            }
         }
     },
 
-    // Початковий стан береться з localStorage; при першому запуску - початкові нотатки
-    created() {
-        let items = loadFromLocalStorage();
-        if (items.length === 0 && localStorage.getItem('notesSeeded') !== 'true') {
-            items = defaultNotes.map(n => ({ ...n }));
-            localStorage.setItem('notesSeeded', 'true');
-            saveToLocalStorage(items);
-        }
-        this.notes = items;
+    mounted() {
+        this.init();
     }
 }).mount('#app');
+

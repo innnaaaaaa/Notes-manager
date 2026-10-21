@@ -18,8 +18,8 @@
         <div class="layout">
             <main>
                 <section id="new-note">
-                    <h2>Нова нотатка</h2>
-                    <form id="note-form" @submit.prevent="addNote">
+                    <h2>{{ editingId !== null ? 'Редагування нотатки' : 'Нова нотатка' }}</h2>
+                    <form id="note-form" @submit.prevent="saveNote">
                         <label class="form-label" for="note-title">Заголовок:</label>
                         <input class="form-control" type="text" id="note-title" v-model.trim="newTitle" required>
 
@@ -27,14 +27,17 @@
                         <textarea class="form-control form-control--textarea" id="note-content" v-model="newContent" required maxlength="300"></textarea>
                         <p id="char-counter" class="char-counter" :class="{ 'near-limit': nearLimit }">{{ charsCount }} / {{ maxLength }}</p>
 
-                        <button class="btn" type="submit">Додати нотатку</button>
+                        <div class="form-actions">
+                            <button class="btn" type="submit">{{ editingId !== null ? 'Зберегти зміни' : 'Додати нотатку' }}</button>
+                            <button class="btn btn--outline" type="button" v-if="editingId !== null" @click="cancelEdit">Скасувати</button>
+                        </div>
                     </form>
                 </section>
 
                 <section id="notes-list">
                     <p id="notes-count">Усього нотаток: {{ notes.length }}</p>
                     <h2>Мої нотатки</h2>
-                    <button id="refresh-btn" class="btn btn--secondary" :disabled="loading" @click="loadData">
+                    <button id="refresh-btn" class="btn btn--secondary" type="button" :disabled="loading" @click="loadData">
                         {{ loading ? 'Завантаження...' : 'Оновити дані з API' }}
                     </button>
                     <p class="error-message" v-if="error">{{ error }}</p>
@@ -44,9 +47,11 @@
                             v-for="note in notes"
                             :key="note.id"
                             :title="note.title"
-                            :excerpt="note.excerpt"
+                            :text="note.text"
                             :category="note.category"
-                            @select="selectedNote = note">
+                            @select="selectedNote = note"
+                            @edit="startEdit(note)"
+                            @delete="removeNote(note)">
                         </note-card>
                     </div>
                 </section>
@@ -57,7 +62,7 @@
                 <template v-if="selectedNote">
                     <h3>{{ selectedNote.title }}</h3>
                     <p>{{ selectedNote.category }}</p>
-                    <p>{{ selectedNote.excerpt }}</p>
+                    <p>{{ selectedNote.text }}</p>
                 </template>
                 <p v-else>Натисніть на нотатку, щоб переглянути її тут.</p>
             </aside>

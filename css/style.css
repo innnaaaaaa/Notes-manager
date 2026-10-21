@@ -182,6 +182,39 @@ section h2{
   outline: 1px solid var(--color-accent);
 }
 
+/* кнопки дій у картці: редагувати / видалити */
+.note-card__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn--small {
+  padding: 6px 12px;
+  font-size: var(--fs-small);
+}
+
+/* контурна кнопка (редагувати, скасувати) */
+.btn--outline {
+  background-color: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn--outline:hover {
+  background-color: var(--color-border);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.empty-message {
+  color: var(--color-text-muted);
+}
+
 /* моноширинний шрифт для пароля - легше розрізнити символи */
 .note-content--password {
     font-family: var(--font-mono);

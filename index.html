@@ -25,7 +25,12 @@
 
                         <label class="form-label" for="note-content">Зміст:</label>
                         <textarea class="form-control form-control--textarea" id="note-content" v-model="newContent" required maxlength="300"></textarea>
-                        <p id="char-counter" class="char-counter" :class="{ 'near-limit': nearLimit }">{{ charsCount }} / {{ maxLength }}</p>
+                        <div class="length-meter" role="progressbar" aria-label="Довжина тексту нотатки"
+                             aria-valuemin="0" :aria-valuemax="maxLength" :aria-valuenow="charsCount">
+                            <div class="length-meter--fill" :class="'length-meter--fill--' + meterState"
+                                 :style="{ width: fillPercent + '%' }"></div>
+                        </div>
+                        <p id="char-counter" class="char-counter" :class="'char-counter--' + meterState">{{ charsCount }} / {{ maxLength }}</p>
 
                         <div class="form-actions">
                             <button class="btn" type="submit">{{ editingId !== null ? 'Зберегти зміни' : 'Додати нотатку' }}</button>

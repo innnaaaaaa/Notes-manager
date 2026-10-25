@@ -132,15 +132,16 @@ const NoteCard = {
     props: ['title', 'text', 'category'],
     emits: ['select', 'edit', 'delete'],
 
-    // Локальний реактивний прапорець: розгорнуто чи згорнуто текст
+    // Локальні реактивні дані: розгорнуто чи згорнуто текст, висота розгорнутого тексту,
+    // чи є що розгортати (текст довший за згорнуту висоту)
     data() {
-        return { expanded: false };
+        return { expanded: false, expandedHeight: 0, canExpand: false };
     },
 
     computed: {
-        // скорочений текст, коли нотатка згорнута
-        preview() {
-            return this.text.length > 40 ? this.text.slice(0, 40) + '…' : this.text;
+        // інлайн-висота лише для розгорнутого стану; для згорнутого діє max-height із CSS
+        bodyStyle() {
+            return this.expanded ? { maxHeight: this.expandedHeight + 'px' } : {};
         },
         categoryClass() {
             const map = {
@@ -155,11 +156,44 @@ const NoteCard = {
         }
     },
 
+    watch: {
+        // текст змінився (редагування): перерахувати висоту
+        text() {
+            this.$nextTick(() => this.measure());
+        }
+    },
+
     methods: {
         onClick() {
             this.expanded = !this.expanded;
+            if (this.expanded) {
+                // реальна висота повного тексту, до якої анімується max-height
+                this.expandedHeight = this.$refs.body.scrollHeight;
+            }
             this.$emit('select');
+        },
+
+        // Вимірює висоту тексту й визначає, чи обрізано його у згорнутому стані
+        measure() {
+            const el = this.$refs.body;
+            if (!el) {
+                return;
+            }
+            if (this.expanded) {
+                this.expandedHeight = el.scrollHeight;
+            } else {
+                this.canExpand = el.scrollHeight > el.clientHeight + 1;
+            }
         }
+    },
+
+    mounted() {
+        this.measure();
+        window.addEventListener('resize', this.measure);
+    },
+
+    beforeUnmount() {
+        window.removeEventListener('resize', this.measure);
     },
 
     template: `
@@ -169,10 +203,10 @@ const NoteCard = {
                 {{ category }}
             </span>
             <h3>{{ title }}</h3>
-            <p :class="{ 'note-content--password': isPassword }">
-                {{ expanded ? text : preview }}
-            </p>
-            <div class="note-card__actions">
+            <div class="note-card--body" :class="{ 'note-card--body--clipped': !expanded && canExpand }" ref="body" :style="bodyStyle">
+                <p :class="{ 'note-content--password': isPassword }">{{ text }}</p>
+            </div>
+            <div class="note-card--actions">
                 <button class="btn btn--small btn--outline" type="button" @click.stop="$emit('edit')">Редагувати</button>
                 <button class="btn btn--small" type="button" @click.stop="$emit('delete')">Видалити</button>
             </div>
@@ -202,8 +236,20 @@ Vue.createApp({
         charsCount() {
             return this.newContent.length;
         },
-        nearLimit() {
-            return this.maxLength - this.charsCount <= 30;
+        // відсоток заповнення поля (ширина індикатора)
+        fillPercent() {
+            return Math.min(100, Math.round(this.charsCount / this.maxLength * 100));
+        },
+        // стан індикатора
+        meterState() {
+            const left = this.maxLength - this.charsCount;
+            if (left <= 30) {
+                return 'danger';
+            }
+            if (left <= 90) {
+                return 'warn';
+            }
+            return 'ok';
         }
     },
 
@@ -344,4 +390,3 @@ Vue.createApp({
         this.init();
     }
 }).mount('#app');
-

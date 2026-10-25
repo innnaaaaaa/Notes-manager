@@ -95,9 +95,42 @@ section h2{
   min-height: 120px;
 }
 
-.char-counter.near-limit {
+/* лічильник символів: колір змінюється плавно залежно від стану (ok / warn / danger) */
+.char-counter {
+    transition: color 0.4s ease;
+}
+
+.char-counter--warn {
+    color: #e0a82e;
+}
+
+.char-counter--danger {
     color: #e63946;
-    font-weight: 700;
+}
+
+/* індикатор довжини тексту */
+.length-meter {
+    height: 6px;
+    margin: -8px 0 8px;
+    background-color: var(--color-border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.length-meter--fill {
+    height: 100%;
+    width: 0;
+    background-color: #4caf50;
+    border-radius: 3px;
+    transition: width 0.2s ease, background-color 0.4s ease;
+}
+
+.length-meter--fill--warn {
+    background-color: #e0a82e;
+}
+
+.length-meter--fill--danger {
+    background-color: #e63946;
 }
 
 /* кнопки */
@@ -177,13 +210,33 @@ section h2{
   margin: 0;
 }
 
+/* текст нотатки: анімоване розгортання/згортання через transition max-height */
+.note-card--body {
+  position: relative;
+  max-height: 3em;            /* згорнутий стан: два рядки тексту */
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+
+/* м'яке затемнення знизу, коли текст обрізано */
+.note-card--body--clipped::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.2em;
+  background: linear-gradient(to bottom, transparent, var(--color-bg-panel-alt));
+  pointer-events: none;
+}
+
 /* розгорнута нотатка (локальний стан expanded у NoteCard) */
 .note-card.expanded {
   outline: 1px solid var(--color-accent);
 }
 
 /* кнопки дій у картці: редагувати / видалити */
-.note-card__actions {
+.note-card--actions {
   display: flex;
   gap: 8px;
   margin-top: 12px;
@@ -314,5 +367,14 @@ footer {
         max-width: none;
         position: sticky;
         top: 24px;
+    }
+}
+
+/* користувачам, які вимкнули анімації в системі, переходи не потрібні */
+@media (prefers-reduced-motion: reduce) {
+    .note-card--body,
+    .length-meter--fill,
+    .char-counter {
+        transition: none;
     }
 }

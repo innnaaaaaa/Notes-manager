@@ -54,6 +54,32 @@ header h1{
     margin: 0;
 }
 
+/* навігація між «сторінками» SPA */
+.main-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.main-nav--link {
+    padding: 6px 12px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--color-text);
+    text-decoration: none;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.main-nav--link:hover {
+    background-color: var(--color-bg-panel-alt);
+}
+
+.main-nav--link.active {
+    border-color: var(--color-accent);
+    color: var(--color-text-heading);
+}
+
 .layout{
     display: block;
 }
@@ -268,6 +294,41 @@ section h2{
   color: var(--color-text-muted);
 }
 
+/* кнопка-посилання (a.btn без підкреслення) */
+.btn--link {
+  display: inline-block;
+  text-decoration: none;
+}
+
+/* ряд кнопок на сторінці */
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.page-actions .btn--secondary {
+  margin-bottom: 0;
+}
+
+/* посилання «назад» */
+.link-back {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.link-back:hover {
+  color: var(--color-text);
+}
+
+/* сторінка деталей нотатки */
+.note-detail--text {
+  margin: 12px 0 20px;
+  white-space: pre-wrap;
+}
+
 /* моноширинний шрифт для пароля - легше розрізнити символи */
 .note-content--password {
     font-family: var(--font-mono);
@@ -354,6 +415,11 @@ footer {
         margin: 0 auto;
         padding: 24px;
         align-items: start;
+    }
+
+    /* сторінки без панелі перегляду займають усю ширину */
+    .layout--single{
+        grid-template-columns: 1fr;
     }
 
     main{

@@ -214,33 +214,94 @@ const NoteCard = {
     `
 };
 
-Vue.createApp({
-    components: { NoteCard },
+// Таблиця маршрутів: патерн - view (компонент «сторінки»). Параметри позначаються :name
+const routes = [
+    { path: '/', view: 'notes-list', title: 'Список нотаток' },
+    { path: '/notes/:id', view: 'note-detail', title: 'Нотатка' },
+    { path: '/new', view: 'note-new', title: 'Нова нотатка' },
+];
+
+// Поточний шлях із hash без символу # (порожній hash - головна сторінка)
+function currentPath() {
+    const path = location.hash.slice(1).split('?')[0];
+    return path || '/';
+}
+
+// Зіставляє шлях із таблицею маршрутів і витягує параметри; null - маршрут не знайдено
+function matchRoute(path) {
+    const pathParts = path.split('/').filter(Boolean);
+
+    for (const route of routes) {
+        const routeParts = route.path.split('/').filter(Boolean);
+        if (routeParts.length !== pathParts.length) {
+            continue;
+        }
+
+        const params = {};
+        const isMatch = routeParts.every((part, i) => {
+            if (part.startsWith(':')) {
+                try {
+                    params[part.slice(1)] = decodeURIComponent(pathParts[i]);
+                } catch (error) {
+                    params[part.slice(1)] = pathParts[i];
+                }
+                return true;
+            }
+            return part === pathParts[i];
+        });
+
+        if (isMatch) {
+            return { view: route.view, title: route.title, params };
+        }
+    }
+
+    return null;
+}
+
+// Визначає поточний маршрут; для невідомого шляху повертає сторінку «Не знайдено»
+function resolveRoute() {
+    const path = currentPath();
+    const matched = matchRoute(path);
+    return matched
+        ? { ...matched, path }
+        : { view: 'not-found', title: 'Не знайдено', params: {}, path };
+}
+
+// Клієнтська навігація: зміна hash не перезавантажує сторінку, а викликає подію hashchange
+function navigate(path) {
+    location.hash = '#' + path;
+}
+
+// Адреса сторінки нотатки за її id
+function notePath(id) {
+    return '/notes/' + encodeURIComponent(id);
+}
+
+// Форма нотатки: використовується і для створення (/new), і для редагування (/notes/:id)
+const NoteForm = {
+    props: {
+        note: { type: Object, default: null },
+        submitLabel: { type: String, default: 'Зберегти' }
+    },
+    emits: ['save', 'cancel'],
 
     data() {
         return {
             maxLength: 300,
-            notes: [],
-            newTitle: '',
-            newContent: '',
-            editingId: null,
-            selectedNote: null,
-            dbAvailable: true,
-            loading: false,
-            error: '',
-            dbError: ''
+            title: this.note ? this.note.title : '',
+            text: this.note ? this.note.text : ''
         };
     },
 
     computed: {
         charsCount() {
-            return this.newContent.length;
+            return this.text.length;
         },
         // відсоток заповнення поля (ширина індикатора)
         fillPercent() {
             return Math.min(100, Math.round(this.charsCount / this.maxLength * 100));
         },
-        // стан індикатора
+        // стан індикатора: ok -> warn (лишилось <= 90 символів) -> danger (лишилось <= 30)
         meterState() {
             const left = this.maxLength - this.charsCount;
             if (left <= 30) {
@@ -254,6 +315,210 @@ Vue.createApp({
     },
 
     methods: {
+        submit() {
+            const title = this.title;
+            const text = this.text.trim();
+            if (!title || !text) {
+                return;
+            }
+            this.$emit('save', { id: this.note ? this.note.id : null, title, text });
+        }
+    },
+
+    template: `
+        <form id="note-form" @submit.prevent="submit">
+            <label class="form-label" for="note-title">Заголовок:</label>
+            <input class="form-control" type="text" id="note-title" v-model.trim="title" required>
+
+            <label class="form-label" for="note-content">Зміст:</label>
+            <textarea class="form-control form-control--textarea" id="note-content" v-model="text" required maxlength="300"></textarea>
+            <div class="length-meter" role="progressbar" aria-label="Довжина тексту нотатки"
+                 aria-valuemin="0" :aria-valuemax="maxLength" :aria-valuenow="charsCount">
+                <div class="length-meter--fill" :class="'length-meter--fill--' + meterState"
+                     :style="{ width: fillPercent + '%' }"></div>
+            </div>
+            <p id="char-counter" class="char-counter" :class="'char-counter--' + meterState">{{ charsCount }} / {{ maxLength }}</p>
+
+            <div class="form-actions">
+                <button class="btn" type="submit">{{ submitLabel }}</button>
+                <button class="btn btn--outline" type="button" @click="$emit('cancel')">Скасувати</button>
+            </div>
+        </form>
+    `
+};
+
+// Маршрут «/»: список нотаток (повторно використовує компонент картки NoteCard)
+const NotesListView = {
+    components: { NoteCard },
+    props: ['notes', 'ready', 'loading', 'error'],
+    emits: ['select', 'delete', 'refresh'],
+
+    methods: {
+        open(note) {
+            navigate(notePath(note.id));
+        }
+    },
+
+    template: `
+        <section id="notes-list">
+            <p id="notes-count">Усього нотаток: {{ notes.length }}</p>
+            <h2>Мої нотатки</h2>
+            <div class="page-actions">
+                <a class="btn btn--link" href="#/new" data-link>+ Нова нотатка</a>
+                <button id="refresh-btn" class="btn btn--secondary" :disabled="loading" @click="$emit('refresh')">
+                    {{ loading ? 'Завантаження...' : 'Оновити дані з API' }}
+                </button>
+            </div>
+            <p class="error-message" v-if="error">{{ error }}</p>
+            <p class="empty-message" v-if="!ready">Завантаження нотаток…</p>
+            <p class="empty-message" v-else-if="notes.length === 0">Нотаток поки немає. Створіть першу за посиланням «Нова нотатка».</p>
+
+            <div class="cards">
+                <note-card
+                    v-for="note in notes"
+                    :key="note.id"
+                    :title="note.title"
+                    :text="note.text"
+                    :category="note.category"
+                    @select="$emit('select', note)"
+                    @edit="open(note)"
+                    @delete="$emit('delete', note)">
+                </note-card>
+            </div>
+        </section>
+    `
+};
+
+// Маршрут «/notes/:id»: перегляд і редагування конкретної нотатки
+const NoteDetailView = {
+    components: { NoteForm },
+    props: ['notes', 'ready', 'noteId'],
+    emits: ['save', 'delete'],
+
+    data() {
+        return { editing: false };
+    },
+
+    computed: {
+        // нотатка з потрібним id (параметр маршруту приходить рядком)
+        note() {
+            return this.notes.find(n => String(n.id) === this.noteId) || null;
+        },
+        categoryClass() {
+            const map = {
+                'Безпека': 'note-category--security',
+                'Навчання': 'note-category--general',
+                'Побут': 'note-category--household',
+            };
+            return this.note ? (map[this.note.category] || 'note-category--other') : '';
+        },
+        isPassword() {
+            return this.note !== null && this.note.category === 'Безпека';
+        }
+    },
+
+    watch: {
+        // перехід на іншу нотатку закриває режим редагування
+        noteId() {
+            this.editing = false;
+        }
+    },
+
+    methods: {
+        onSave(payload) {
+            this.$emit('save', payload);
+            this.editing = false;
+        }
+    },
+
+    template: `
+        <section class="note-detail">
+            <p><a class="link-back" href="#/" data-link>← До списку нотаток</a></p>
+
+            <p class="empty-message" v-if="!ready">Завантаження…</p>
+
+            <template v-else-if="note">
+                <template v-if="!editing">
+                    <span class="note-category" :class="categoryClass">{{ note.category }}</span>
+                    <h2>{{ note.title }}</h2>
+                    <p class="note-detail--text" :class="{ 'note-content--password': isPassword }">{{ note.text }}</p>
+                    <div class="page-actions">
+                        <button class="btn" type="button" @click="editing = true">Редагувати</button>
+                        <button class="btn btn--outline" type="button" @click="$emit('delete', note)">Видалити</button>
+                    </div>
+                </template>
+
+                <template v-else>
+                    <h2>Редагування нотатки</h2>
+                    <note-form :note="note" submit-label="Зберегти зміни" @save="onSave" @cancel="editing = false"></note-form>
+                </template>
+            </template>
+
+            <template v-else>
+                <h2>Нотатку не знайдено</h2>
+                <p>Нотатки з номером «{{ noteId }}» не існує або її було видалено.</p>
+            </template>
+        </section>
+    `
+};
+
+// Маршрут «/new»: форма створення нової нотатки (практикум 8)
+const NoteNewView = {
+    components: { NoteForm },
+    emits: ['save'],
+
+    template: `
+        <section id="new-note">
+            <p><a class="link-back" href="#/" data-link>← До списку нотаток</a></p>
+            <h2>Нова нотатка</h2>
+            <note-form submit-label="Додати нотатку" @save="$emit('save', $event)" @cancel="goHome"></note-form>
+        </section>
+    `,
+
+    methods: {
+        goHome() {
+            navigate('/');
+        }
+    }
+};
+
+// Сторінка «Не знайдено» для невідомого маршруту
+const NotFoundView = {
+    props: ['path'],
+
+    template: `
+        <section class="note-detail">
+            <h2>Сторінку не знайдено</h2>
+            <p>Адреси «{{ path }}» у застосунку немає.</p>
+            <p><a class="btn btn--link" href="#/" data-link>На головну</a></p>
+        </section>
+    `
+};
+
+Vue.createApp({
+    components: { NotesListView, NoteDetailView, NoteNewView, NotFoundView },
+
+    data() {
+        return {
+            route: resolveRoute(),
+            notes: [],
+            ready: false,
+            selectedNote: null,
+            dbAvailable: true,
+            loading: false,
+            error: '',
+            dbError: ''
+        };
+    },
+
+    methods: {
+        // Оновлює поточний маршрут (викликається при hashchange та на старті)
+        syncRoute() {
+            this.route = resolveRoute();
+            document.title = this.route.title + ' — Менеджер нотаток';
+            window.scrollTo(0, 0);
+        },
+
         // Виконує операцію з IndexedDB; при помилці показує зрозуміле повідомлення
         async persist(operation) {
             if (!this.dbAvailable) {
@@ -272,16 +537,14 @@ Vue.createApp({
             return this.notes.reduce((max, n) => (typeof n.id === 'number' ? Math.max(max, n.id) : max), 0) + 1;
         },
 
-        // Додає нову нотатку або оновлює редаговану
-        async saveNote() {
-            const title = this.newTitle;
-            const text = this.newContent.trim();
+        // Створює нову нотатку (id === null) або оновлює наявну
+        async saveNote({ id, title, text }) {
             if (!title || !text) {
                 return;
             }
 
-            if (this.editingId !== null) {
-                const current = this.notes.find(n => n.id === this.editingId);
+            if (id !== null) {
+                const current = this.notes.find(n => n.id === id);
                 // звичайний об'єкт: IndexedDB не може клонувати реактивний Proxy Vue
                 const updated = { ...current, title, text };
                 this.notes = this.notes.map(n => (n.id === updated.id ? updated : n));
@@ -293,24 +556,9 @@ Vue.createApp({
                 const note = { id: this.nextId(), title, category: 'Загальне', text };
                 this.notes.push(note);
                 await this.persist(() => addItem(note));
+                // після створення відкриваємо сторінку нової нотатки (маршрут із параметром)
+                navigate(notePath(note.id));
             }
-
-            this.cancelEdit();
-        },
-
-        // Переносить дані нотатки у форму для редагування
-        startEdit(note) {
-            this.editingId = note.id;
-            this.newTitle = note.title;
-            this.newContent = note.text;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        },
-
-        // Скидає форму й режим редагування
-        cancelEdit() {
-            this.editingId = null;
-            this.newTitle = '';
-            this.newContent = '';
         },
 
         // Видаляє нотатку зі списку та зі сховища
@@ -319,8 +567,9 @@ Vue.createApp({
             if (this.selectedNote && this.selectedNote.id === note.id) {
                 this.selectedNote = null;
             }
-            if (this.editingId === note.id) {
-                this.cancelEdit();
+            // якщо видалили нотатку зі сторінки її деталей - повертаємося до списку
+            if (this.route.view === 'note-detail' && this.route.params.id === String(note.id)) {
+                navigate('/');
             }
             await this.persist(() => deleteItem(note.id));
         },
@@ -382,8 +631,20 @@ Vue.createApp({
                 this.dbAvailable = false;
                 this.dbError = 'Локальна база даних (IndexedDB) недоступна: зміни не збережуться після перезавантаження сторінки.';
                 this.notes = defaultNotes.map(n => ({ ...n }));
+            } finally {
+                this.ready = true;
             }
         }
+    },
+
+    created() {
+        // кнопки «назад»/«вперед» та зміна адреси змінюють hash -> перемальовуємо потрібну «сторінку»
+        window.addEventListener('hashchange', this.syncRoute);
+        document.title = this.route.title + ' — Менеджер нотаток';
+    },
+
+    beforeUnmount() {
+        window.removeEventListener('hashchange', this.syncRoute);
     },
 
     mounted() {

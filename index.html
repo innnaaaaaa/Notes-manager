@@ -12,59 +12,49 @@
 <body>
     <header>
         <h1>Менеджер нотаток</h1>
+        <nav class="main-nav" aria-label="Основна навігація">
+            <a class="main-nav--link" href="#/" data-link
+               :class="{ active: route.view === 'notes-list' }"
+               :aria-current="route.view === 'notes-list' ? 'page' : null">Нотатки</a>
+            <a class="main-nav--link" href="#/new" data-link
+               :class="{ active: route.view === 'note-new' }"                   :aria-current="route.view === 'note-new' ? 'page' : null">Нова нотатка</a>
+        </nav>
     </header>
 
     <div id="app">
-        <div class="layout">
-            <main>
-                <section id="new-note">
-                    <h2>{{ editingId !== null ? 'Редагування нотатки' : 'Нова нотатка' }}</h2>
-                    <form id="note-form" @submit.prevent="saveNote">
-                        <label class="form-label" for="note-title">Заголовок:</label>
-                        <input class="form-control" type="text" id="note-title" v-model.trim="newTitle" required>
+        <div class="layout" :class="{ 'layout--single': route.view !== 'notes-list' }">
+            <main id="view">
+                <p class="error-message" v-if="dbError">{{ dbError }}</p>
 
-                        <label class="form-label" for="note-content">Зміст:</label>
-                        <textarea class="form-control form-control--textarea" id="note-content" v-model="newContent" required maxlength="300"></textarea>
-                        <div class="length-meter" role="progressbar" aria-label="Довжина тексту нотатки"
-                             aria-valuemin="0" :aria-valuemax="maxLength" :aria-valuenow="charsCount">
-                            <div class="length-meter--fill" :class="'length-meter--fill--' + meterState"
-                                 :style="{ width: fillPercent + '%' }"></div>
-                        </div>
-                        <p id="char-counter" class="char-counter" :class="'char-counter--' + meterState">{{ charsCount }} / {{ maxLength }}</p>
+                <notes-list-view
+                    v-if="route.view === 'notes-list'"
+                    :notes="notes"
+                    :ready="ready"
+                    :loading="loading"
+                    :error="error"
+                    @select="selectedNote = $event"
+                    @delete="removeNote"
+                    @refresh="loadData">
+                </notes-list-view>
 
-                        <div class="form-actions">
-                            <button class="btn" type="submit">{{ editingId !== null ? 'Зберегти зміни' : 'Додати нотатку' }}</button>
-                            <button class="btn btn--outline" type="button" v-if="editingId !== null" @click="cancelEdit">Скасувати</button>
-                        </div>
-                    </form>
-                </section>
+                <note-detail-view
+                    v-else-if="route.view === 'note-detail'"
+                    :notes="notes"
+                    :ready="ready"
+                    :note-id="route.params.id"
+                    @save="saveNote"
+                    @delete="removeNote">
+                </note-detail-view>
 
-                <section id="notes-list">
-                    <p id="notes-count">Усього нотаток: {{ notes.length }}</p>
-                    <h2>Мої нотатки</h2>
-                    <button id="refresh-btn" class="btn btn--secondary" :disabled="loading" @click="loadData">
-                        {{ loading ? 'Завантаження...' : 'Оновити дані з API' }}
-                    </button>
-                    <p class="error-message" v-if="dbError">{{ dbError }}</p>
-                    <p class="error-message" v-if="error">{{ error }}</p>
-                    <p class="empty-message" v-if="notes.length === 0">Нотаток поки немає. Додайте першу за допомогою форми.</p>
+                <note-new-view
+                    v-else-if="route.view === 'note-new'"
+                    @save="saveNote">
+                </note-new-view>
 
-                    <div class="cards">
-                        <note-card
-                            v-for="note in notes"
-                            :key="note.id"
-                            :title="note.title"
-                            :text="note.text"
-                            :category="note.category"
-                            @select="selectedNote = note"
-                            @edit="startEdit(note)"
-                            @delete="removeNote(note)">
-                        </note-card>
-                    </div>
-                </section>
+                <not-found-view v-else :path="route.path"></not-found-view>
             </main>
 
-            <aside>
+            <aside v-if="route.view === 'notes-list'">
                 <h2>Перегляд обраної нотатки</h2>
                 <template v-if="selectedNote">
                     <h3>{{ selectedNote.title }}</h3>

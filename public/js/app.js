@@ -2,8 +2,7 @@ console.log('app.js підключено');
 
 const STORAGE_KEY = 'notes';
 
-// API: JSONPlaceholder (https://jsonplaceholder.typicode.com), без ключа
-const API_URL = 'https://jsonplaceholder.typicode.com/posts?userId=1';
+const API_URL = '/api/notes';
 
 // Початкові тестові нотатки (вигадані дані: реальні паролі не зберігаємо)
 const defaultNotes = [
@@ -366,7 +365,7 @@ const NotesListView = {
             <div class="page-actions">
                 <a class="btn btn--link" href="#/new" data-link>+ Нова нотатка</a>
                 <button id="refresh-btn" class="btn btn--secondary" :disabled="loading" @click="$emit('refresh')">
-                    {{ loading ? 'Завантаження...' : 'Оновити дані з API' }}
+                    {{ loading ? 'Завантаження...' : 'Оновити дані з сервера' }}
                 </button>
             </div>
             <p class="error-message" v-if="error">{{ error }}</p>
@@ -585,11 +584,11 @@ Vue.createApp({
                 }
                 const data = await response.json();
 
-                const apiNotes = data.map(post => ({
-                    id: 'api-' + post.id,
-                    title: post.title,
-                    category: 'API',
-                    text: post.body,
+                const apiNotes = data.map(iteam => ({
+                    id: 'api-' + iteam.id,
+                    title: iteam.title,
+                    category: 'Сервер',
+                    text: iteam.body,
                     fromApi: true
                 }));
 
@@ -603,7 +602,7 @@ Vue.createApp({
                     }
                 });
             } catch (err) {
-                this.error = 'Нотатки недоступні офлайн';
+                this.error = 'Невдалося отримати нотатки з сервера.Перевірте підключення до інтернету або спробуйте пізніше.';
                 console.error('Error fetching data:', err);
             } finally {
                 this.loading = false;

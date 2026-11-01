@@ -1,0 +1,10 @@
+{
+  "name": "notes-manager-server",
+  "version": "1.0.0",
+  "description": "Найпростіший сервер Node.js (модуль http) для застосунку «Менеджер нотаток»",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "ISC"
+}

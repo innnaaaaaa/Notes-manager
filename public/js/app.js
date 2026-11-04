@@ -588,7 +588,7 @@ Vue.createApp({
                     id: 'api-' + iteam.id,
                     title: iteam.title,
                     category: 'Сервер',
-                    text: iteam.body,
+                    text: iteam.text,
                     fromApi: true
                 }));
 

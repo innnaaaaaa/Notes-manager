@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Менеджер нотаток</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="js/app.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <h1>Менеджер нотаток</h1>
+        <nav class="main-nav" aria-label="Основна навігація">
+            <a class="main-nav--link" href="#/" data-link
+               :class="{ active: route.view === 'notes-list' }"
+               :aria-current="route.view === 'notes-list' ? 'page' : null">Нотатки</a>
+            <a class="main-nav--link" href="#/new" data-link
+               :class="{ active: route.view === 'note-new' }"                   :aria-current="route.view === 'note-new' ? 'page' : null">Нова нотатка</a>
+        </nav>
+    </header>
+
+    <div id="app">
+        <div class="layout" :class="{ 'layout--single': route.view !== 'notes-list' }">
+            <main id="view">
+                <p class="error-message" v-if="dbError">{{ dbError }}</p>
+
+                <notes-list-view
+                    v-if="route.view === 'notes-list'"
+                    :notes="notes"
+                    :ready="ready"
+                    :loading="loading"
+                    :error="error"
+                    @select="selectedNote = $event"
+                    @delete="removeNote"
+                    @refresh="loadData">
+                </notes-list-view>
+
+                <note-detail-view
+                    v-else-if="route.view === 'note-detail'"
+                    :notes="notes"
+                    :ready="ready"
+                    :note-id="route.params.id"
+                    @save="saveNote"
+                    @delete="removeNote">
+                </note-detail-view>
+
+                <note-new-view
+                    v-else-if="route.view === 'note-new'"
+                    @save="saveNote">
+                </note-new-view>
+
+                <not-found-view v-else :path="route.path"></not-found-view>
+            </main>
+
+            <aside v-if="route.view === 'notes-list'">
+                <h2>Перегляд обраної нотатки</h2>
+                <template v-if="selectedNote">
+                    <h3>{{ selectedNote.title }}</h3>
+                    <p>{{ selectedNote.category }}</p>
+                    <p>{{ selectedNote.text }}</p>
+                </template>
+                <p v-else>Натисніть на нотатку, щоб переглянути її тут.</p>
+            </aside>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Менеджер нотаток. Розроблений в межах дисципліни "Програмування веб-застосунків".</p>
+    </footer>
+</body>
+</html>

@@ -19,6 +19,19 @@ const MIME_TYPES = {
     '.ico': 'image/x-icon'
 };
 
+// Практикум 15: заголовки безпеки, які додаються до кожної відповіді
+const SECURITY_HEADERS = {
+    'X-Content-Type-Options': 'nosniff',   // браузер не «вгадує» тип вмісту (захист від виконання JSON/тексту як скрипта)
+    'Referrer-Policy': 'no-referrer',      // адреса сторінки не передається на інші сайти
+    'X-Frame-Options': 'DENY'              // сторінку не можна вбудувати в iframe (захист від clickjacking)
+};
+// Надсилає відповідь у форматі JSON із потрібним статус-кодом і заголовком Content-Type
+function sendJson(res, status, data, extraHeaders = {}) {
+    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...SECURITY_HEADERS, ...extraHeaders });
+    res.end(JSON.stringify(data));
+}
+
+
 // Обробляє запити до API
 function handleApi(req, res, pathname) {
     // API доступне лише для читання

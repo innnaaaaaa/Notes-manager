@@ -19,12 +19,6 @@ const MIME_TYPES = {
     '.ico': 'image/x-icon'
 };
 
-// Надсилає відповідь у форматі JSON із потрібним статус-кодом і заголовком Content-Type
-function sendJson(res, status, data, extraHeaders = {}) {
-    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...extraHeaders });
-    res.end(JSON.stringify(data));
-}
-
 // Обробляє запити до API
 function handleApi(req, res, pathname) {
     // API доступне лише для читання
@@ -83,7 +77,7 @@ function serveStatic(req, res, pathname) {
         }
 
         const type = MIME_TYPES[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
-        res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache' });
+        res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache', ...SECURITY_HEADERS });
         res.end(req.method === 'HEAD' ? undefined : data);
     });
 }

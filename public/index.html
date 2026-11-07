@@ -59,7 +59,7 @@
                 <template v-if="selectedNote">
                     <h3>{{ selectedNote.title }}</h3>
                     <p>{{ selectedNote.category }}</p>
-                    <p>{{ selectedNote.text }}</p>
+                    <p v-html="selectedNote.text"></p>
                 </template>
                 <p v-else>Натисніть на нотатку, щоб переглянути її тут.</p>
             </aside>

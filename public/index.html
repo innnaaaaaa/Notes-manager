@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Менеджер нотаток</title>
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="js/vue.global.prod.js"></script>
     <script src="js/app.js" defer></script>
 </head>
 
@@ -17,7 +17,8 @@
                :class="{ active: route.view === 'notes-list' }"
                :aria-current="route.view === 'notes-list' ? 'page' : null">Нотатки</a>
             <a class="main-nav--link" href="#/new" data-link
-               :class="{ active: route.view === 'note-new' }"                   :aria-current="route.view === 'note-new' ? 'page' : null">Нова нотатка</a>
+               :class="{ active: route.view === 'note-new' }"                  
+               :aria-current="route.view === 'note-new' ? 'page' : null">Нова нотатка</a>
         </nav>
     </header>
 
@@ -58,8 +59,24 @@
                 <h2>Перегляд обраної нотатки</h2>
                 <template v-if="selectedNote">
                     <h3>{{ selectedNote.title }}</h3>
-                    <p>{{ selectedNote.category }}</p>
-                    <p>{{ selectedNote.text }}</p>
+                    <p class="category-tag">{{ selectedNote.category }}</p>
+                    
+                    <!-- Перевірка категорії "Безпека" -->
+                    <template v-if="selectedNote.category === 'Безпека'">
+                        <p v-if="!selectedNote.showContent" class="masked-text">••••••••</p>
+                        <p v-else>{{ selectedNote.text || selectedNote.content }}</p>
+                        
+                        <button type="button" 
+                                class="btn-toggle-security"
+                                @click="selectedNote.showContent = !selectedNote.showContent">
+                            {{ selectedNote.showContent ? 'Приховати' : 'Показати' }}
+                        </button>
+                    </template>
+
+                    <!-- Для всіх інших категорій -->
+                    <template v-else>
+                        <p>{{ selectedNote.text || selectedNote.content }}</p>
+                    </template>
                 </template>
                 <p v-else>Натисніть на нотатку, щоб переглянути її тут.</p>
             </aside>

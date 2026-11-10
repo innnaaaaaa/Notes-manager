@@ -1,10 +1,9 @@
 console.log('app.js підключено');
 
 const STORAGE_KEY = 'notes';
-
 const API_URL = '/api/notes';
 
-// Початкові тестові нотатки (вигадані дані: реальні паролі не зберігаємо)
+// Початкові тестові нотатки (реальні паролі не зберігаємо)
 const defaultNotes = [
     { id: 1, title: 'Нотатки з лекції', category: 'Навчання', text: 'Бази даних, PostgreSQL: таблиці, первинні та зовнішні ключі, базові запити SELECT/INSERT.' },
     { id: 2, title: 'Пароль від Wifi', category: 'Безпека', text: '12345678' },
@@ -13,14 +12,12 @@ const defaultNotes = [
     { id: 5, title: 'Пароль від пошти', category: 'Безпека', text: 'qwerty2026!' },
 ];
 
-// localStorage
+// --- localStorage ---
 
-// Зберігає масив нотаток у localStorage (об'єкти перетворюються в рядок JSON)
 function saveToLocalStorage(items) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
 }
 
-// Читає нотатки з localStorage; при пошкоджених даних повертає порожній масив
 function loadFromLocalStorage() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -32,20 +29,18 @@ function loadFromLocalStorage() {
     }
 }
 
-// IndexedDB
+// --- IndexedDB ---
 
 const DB_NAME = 'NotesDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'notes';
 let dbPromise = null;
 
-// Відкриває базу і кешує з'єднання
 function openDB() {
     if (!dbPromise) {
         dbPromise = new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-            // викликається лише при створенні бази або підвищенні версії
             request.onupgradeneeded = event => {
                 const db = event.target.result;
                 if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -60,7 +55,6 @@ function openDB() {
     return dbPromise;
 }
 
-// Додає нотатку або оновлює наявну з тим самим id
 async function addItem(item) {
     const db = await openDB();
     return new Promise((resolve, reject) => {
@@ -72,12 +66,10 @@ async function addItem(item) {
     });
 }
 
-// Оновлення нотатки: put із тим самим id замінює запис, дубліката не створюється
 async function updateItem(item) {
     return addItem(item);
 }
 
-// Повертає всі нотатки зі сховища
 async function getAllItems() {
     const db = await openDB();
     return new Promise((resolve, reject) => {
@@ -88,7 +80,6 @@ async function getAllItems() {
     });
 }
 
-// Видаляє нотатки за списком id в одній транзакції
 async function deleteItems(ids) {
     const db = await openDB();
     return new Promise((resolve, reject) => {
@@ -101,12 +92,10 @@ async function deleteItems(ids) {
     });
 }
 
-// Видаляє одну нотатку
 async function deleteItem(id) {
     return deleteItems([id]);
 }
 
-// Одноразова міграція: переносить нотатки з localStorage в порожнє сховище IndexedDB
 async function migrateFromLocalStorage() {
     if (localStorage.getItem('migrated') === 'true') {
         return;
@@ -122,23 +111,25 @@ async function migrateFromLocalStorage() {
         console.log(`Мігровано нотаток із localStorage в IndexedDB: ${oldItems.length}`);
     }
 
-    // прапорець, щоб міграція не повторювалась при наступних запусках
     localStorage.setItem('migrated', 'true');
 }
 
-// Компонент однієї нотатки. Дані отримує через props, а про дії повідомляє подіями.
+// --- Компоненти Vue ---
+
 const NoteCard = {
     props: ['title', 'text', 'category'],
     emits: ['select', 'edit', 'delete'],
 
-    // Локальні реактивні дані: розгорнуто чи згорнуто текст, висота розгорнутого тексту,
-    // чи є що розгортати (текст довший за згорнуту висоту)
     data() {
-        return { expanded: false, expandedHeight: 0, canExpand: false };
+        return { 
+            expanded: false, 
+            expandedHeight: 0, 
+            canExpand: false,
+            showSecret: false // Прапорець перемикання видимості для категорії "Безпека"
+        };
     },
 
     computed: {
-        // інлайн-висота лише для розгорнутого стану; для згорнутого діє max-height із CSS
         bodyStyle() {
             return this.expanded ? { maxHeight: this.expandedHeight + 'px' } : {};
         },
@@ -156,7 +147,6 @@ const NoteCard = {
     },
 
     watch: {
-        // текст змінився (редагування): перерахувати висоту
         text() {
             this.$nextTick(() => this.measure());
         }
@@ -166,23 +156,24 @@ const NoteCard = {
         onClick() {
             this.expanded = !this.expanded;
             if (this.expanded) {
-                // реальна висота повного тексту, до якої анімується max-height
-                this.expandedHeight = this.$refs.body.scrollHeight;
+                this.expandedHeight = this.$refs.body ? this.$refs.body.scrollHeight : 0;
             }
             this.$emit('select');
         },
 
-        // Вимірює висоту тексту й визначає, чи обрізано його у згорнутому стані
         measure() {
             const el = this.$refs.body;
-            if (!el) {
-                return;
-            }
+            if (!el) return;
             if (this.expanded) {
                 this.expandedHeight = el.scrollHeight;
             } else {
                 this.canExpand = el.scrollHeight > el.clientHeight + 1;
             }
+        },
+
+        toggleSecret() {
+            this.showSecret = !this.showSecret;
+            this.$nextTick(() => this.measure());
         }
     },
 
@@ -198,12 +189,24 @@ const NoteCard = {
     template: `
         <article class="note-card" :class="{ expanded: expanded }" @click="onClick">
             <span class="note-category" :class="categoryClass">
-                <svg v-if="isPassword" class="note-category-icon" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z"/></svg>
+                <svg v-if="isPassword" class="note-category-icon" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" focusable="false">
+                    <path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z"/>
+                </svg>
                 {{ category }}
             </span>
             <h3>{{ title }}</h3>
             <div class="note-card--body" :class="{ 'note-card--body--clipped': !expanded && canExpand }" ref="body" :style="bodyStyle">
-                <p :class="{ 'note-content--password': isPassword }">{{ text }}</p>
+                <!-- Маскування даних для категорії "Безпека" -->
+                <template v-if="isPassword">
+                    <p v-if="!showSecret" class="masked-text">••••••••</p>
+                    <p v-else class="note-content--password">{{ text }}</p>
+                    <button class="btn btn--small btn--outline" type="button" @click.stop="toggleSecret" style="margin-top: 6px;">
+                        {{ showSecret ? 'Приховати' : 'Показати' }}
+                    </button>
+                </template>
+                <template v-else>
+                    <p>{{ text }}</p>
+                </template>
             </div>
             <div class="note-card--actions">
                 <button class="btn btn--small btn--outline" type="button" @click.stop="$emit('edit')">Редагувати</button>
@@ -213,28 +216,23 @@ const NoteCard = {
     `
 };
 
-// Таблиця маршрутів: патерн - view (компонент «сторінки»). Параметри позначаються :name
 const routes = [
     { path: '/', view: 'notes-list', title: 'Список нотаток' },
     { path: '/notes/:id', view: 'note-detail', title: 'Нотатка' },
     { path: '/new', view: 'note-new', title: 'Нова нотатка' },
 ];
 
-// Поточний шлях із hash без символу # (порожній hash - головна сторінка)
 function currentPath() {
     const path = location.hash.slice(1).split('?')[0];
     return path || '/';
 }
 
-// Зіставляє шлях із таблицею маршрутів і витягує параметри; null - маршрут не знайдено
 function matchRoute(path) {
     const pathParts = path.split('/').filter(Boolean);
 
     for (const route of routes) {
         const routeParts = route.path.split('/').filter(Boolean);
-        if (routeParts.length !== pathParts.length) {
-            continue;
-        }
+        if (routeParts.length !== pathParts.length) continue;
 
         const params = {};
         const isMatch = routeParts.every((part, i) => {
@@ -253,11 +251,9 @@ function matchRoute(path) {
             return { view: route.view, title: route.title, params };
         }
     }
-
     return null;
 }
 
-// Визначає поточний маршрут; для невідомого шляху повертає сторінку «Не знайдено»
 function resolveRoute() {
     const path = currentPath();
     const matched = matchRoute(path);
@@ -266,17 +262,14 @@ function resolveRoute() {
         : { view: 'not-found', title: 'Не знайдено', params: {}, path };
 }
 
-// Клієнтська навігація: зміна hash не перезавантажує сторінку, а викликає подію hashchange
 function navigate(path) {
     location.hash = '#' + path;
 }
 
-// Адреса сторінки нотатки за її id
 function notePath(id) {
     return '/notes/' + encodeURIComponent(id);
 }
 
-// Форма нотатки: використовується і для створення (/new), і для редагування (/notes/:id)
 const NoteForm = {
     props: {
         note: { type: Object, default: null },
@@ -296,19 +289,13 @@ const NoteForm = {
         charsCount() {
             return this.text.length;
         },
-        // відсоток заповнення поля (ширина індикатора)
         fillPercent() {
             return Math.min(100, Math.round(this.charsCount / this.maxLength * 100));
         },
-        // стан індикатора: ok -> warn (лишилось <= 90 символів) -> danger (лишилось <= 30)
         meterState() {
             const left = this.maxLength - this.charsCount;
-            if (left <= 30) {
-                return 'danger';
-            }
-            if (left <= 90) {
-                return 'warn';
-            }
+            if (left <= 30) return 'danger';
+            if (left <= 90) return 'warn';
             return 'ok';
         }
     },
@@ -317,9 +304,7 @@ const NoteForm = {
         submit() {
             const title = this.title;
             const text = this.text.trim();
-            if (!title || !text) {
-                return;
-            }
+            if (!title || !text) return;
             this.$emit('save', { id: this.note ? this.note.id : null, title, text });
         }
     },
@@ -346,7 +331,6 @@ const NoteForm = {
     `
 };
 
-// Маршрут «/»: список нотаток (повторно використовує компонент картки NoteCard)
 const NotesListView = {
     components: { NoteCard },
     props: ['notes', 'ready', 'loading', 'error'],
@@ -388,18 +372,19 @@ const NotesListView = {
     `
 };
 
-// Маршрут «/notes/:id»: перегляд і редагування конкретної нотатки
 const NoteDetailView = {
     components: { NoteForm },
     props: ['notes', 'ready', 'noteId'],
     emits: ['save', 'delete'],
 
     data() {
-        return { editing: false };
+        return { 
+            editing: false,
+            showSecretDetail: false
+        };
     },
 
     computed: {
-        // нотатка з потрібним id (параметр маршруту приходить рядком)
         note() {
             return this.notes.find(n => String(n.id) === this.noteId) || null;
         },
@@ -417,9 +402,9 @@ const NoteDetailView = {
     },
 
     watch: {
-        // перехід на іншу нотатку закриває режим редагування
         noteId() {
             this.editing = false;
+            this.showSecretDetail = false;
         }
     },
 
@@ -440,7 +425,19 @@ const NoteDetailView = {
                 <template v-if="!editing">
                     <span class="note-category" :class="categoryClass">{{ note.category }}</span>
                     <h2>{{ note.title }}</h2>
-                    <p class="note-detail--text" :class="{ 'note-content--password': isPassword }">{{ note.text }}</p>
+                    
+                    <!-- Маскування в детальному перегляді -->
+                    <template v-if="isPassword">
+                        <p v-if="!showSecretDetail" class="masked-text">••••••••</p>
+                        <p v-else class="note-detail--text note-content--password">{{ note.text }}</p>
+                        <button class="btn btn--small btn--outline" type="button" @click="showSecretDetail = !showSecretDetail" style="margin-bottom: 12px;">
+                            {{ showSecretDetail ? 'Приховати' : 'Показати' }}
+                        </button>
+                    </template>
+                    <template v-else>
+                        <p class="note-detail--text">{{ note.text }}</p>
+                    </template>
+
                     <div class="page-actions">
                         <button class="btn" type="button" @click="editing = true">Редагувати</button>
                         <button class="btn btn--outline" type="button" @click="$emit('delete', note)">Видалити</button>
@@ -461,7 +458,6 @@ const NoteDetailView = {
     `
 };
 
-// Маршрут «/new»: форма створення нової нотатки (практикум 8)
 const NoteNewView = {
     components: { NoteForm },
     emits: ['save'],
@@ -481,7 +477,6 @@ const NoteNewView = {
     }
 };
 
-// Сторінка «Не знайдено» для невідомого маршруту
 const NotFoundView = {
     props: ['path'],
 
@@ -511,18 +506,14 @@ Vue.createApp({
     },
 
     methods: {
-        // Оновлює поточний маршрут (викликається при hashchange та на старті)
         syncRoute() {
             this.route = resolveRoute();
             document.title = this.route.title + ' — Менеджер нотаток';
             window.scrollTo(0, 0);
         },
 
-        // Виконує операцію з IndexedDB; при помилці показує зрозуміле повідомлення
         async persist(operation) {
-            if (!this.dbAvailable) {
-                return;
-            }
+            if (!this.dbAvailable) return;
             try {
                 await operation();
             } catch (err) {
@@ -531,20 +522,15 @@ Vue.createApp({
             }
         },
 
-        // Наступний вільний числовий id
         nextId() {
             return this.notes.reduce((max, n) => (typeof n.id === 'number' ? Math.max(max, n.id) : max), 0) + 1;
         },
 
-        // Створює нову нотатку (id === null) або оновлює наявну
         async saveNote({ id, title, text }) {
-            if (!title || !text) {
-                return;
-            }
+            if (!title || !text) return;
 
             if (id !== null) {
                 const current = this.notes.find(n => n.id === id);
-                // звичайний об'єкт: IndexedDB не може клонувати реактивний Proxy Vue
                 const updated = { ...current, title, text };
                 this.notes = this.notes.map(n => (n.id === updated.id ? updated : n));
                 if (this.selectedNote && this.selectedNote.id === updated.id) {
@@ -555,25 +541,21 @@ Vue.createApp({
                 const note = { id: this.nextId(), title, category: 'Загальне', text };
                 this.notes.push(note);
                 await this.persist(() => addItem(note));
-                // після створення відкриваємо сторінку нової нотатки (маршрут із параметром)
                 navigate(notePath(note.id));
             }
         },
 
-        // Видаляє нотатку зі списку та зі сховища
         async removeNote(note) {
             this.notes = this.notes.filter(n => n.id !== note.id);
             if (this.selectedNote && this.selectedNote.id === note.id) {
                 this.selectedNote = null;
             }
-            // якщо видалили нотатку зі сторінки її деталей - повертаємося до списку
             if (this.route.view === 'note-detail' && this.route.params.id === String(note.id)) {
                 navigate('/');
             }
             await this.persist(() => deleteItem(note.id));
         },
 
-        // Завантажує нотатки з API
         async loadData() {
             this.loading = true;
             this.error = '';
@@ -602,14 +584,13 @@ Vue.createApp({
                     }
                 });
             } catch (err) {
-                this.error = 'Невдалося отримати нотатки з сервера.Перевірте підключення до інтернету або спробуйте пізніше.';
+                this.error = 'Невдалося отримати нотатки з сервера. Перевірте підключення до інтернету або спробуйте пізніше.';
                 console.error('Error fetching data:', err);
             } finally {
                 this.loading = false;
             }
         },
 
-        // Початкове завантаження: міграція, читання з IndexedDB, перший запуск
         async init() {
             try {
                 await migrateFromLocalStorage();
@@ -625,7 +606,6 @@ Vue.createApp({
 
                 this.notes = items;
             } catch (err) {
-                // IndexedDB недоступна: працюємо лише в пам'яті
                 console.error('Не вдалося відкрити IndexedDB:', err);
                 this.dbAvailable = false;
                 this.dbError = 'Локальна база даних (IndexedDB) недоступна: зміни не збережуться після перезавантаження сторінки.';
@@ -637,7 +617,6 @@ Vue.createApp({
     },
 
     created() {
-        // кнопки «назад»/«вперед» та зміна адреси змінюють hash -> перемальовуємо потрібну «сторінку»
         window.addEventListener('hashchange', this.syncRoute);
         document.title = this.route.title + ' — Менеджер нотаток';
     },

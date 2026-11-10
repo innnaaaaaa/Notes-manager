@@ -196,6 +196,56 @@ section h2{
     background-color: var(--color-border);
 }
 
+/* --- Захист та маскування нотаток з категорії "Безпека" --- */
+
+/* 1. Маскування тексту нотатки в списках та панелі перегляду */
+.note-card:has(.note-category--security) .note-card--body p,
+.note-card[data-category="Безпека"] .note-card--body p,
+.note-detail:has(.note-category--security) .note-detail--text {
+    font-family: monospace;
+    letter-spacing: 4px;
+    color: #e63946;
+    user-select: none; /* Запобігає копіюванню прихованого тексту */
+}
+
+/* 2. Модифікація та стилізація кнопки «Показати / Приховати» */
+.btn--secret-toggle,
+button[name="show-secret"],
+.btn-show {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #e63946;
+    color: #ffffff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    margin-top: 8px;
+}
+
+.btn--secret-toggle:hover,
+.btn-show:hover {
+    background-color: #c1121f;
+    transform: translateY(-1px);
+}
+
+.btn--secret-toggle:active,
+.btn-show:active {
+    transform: translateY(0);
+}
+
+/* 3. Додавання іконки ока перед текстом кнопки через CSS */
+.btn--secret-toggle::before,
+.btn-show::before {
+    content: "👁️";
+    font-size: 0.9rem;
+}
+
 .error-message {
     color: var(--color-accent);
     background-color: var(--color-bg-panel-alt);
@@ -385,6 +435,35 @@ aside {
   border-left: 4px solid var(--color-accent);
   border-radius: 6px;
   color: var(--color-text);
+}
+
+/* Модифікація кнопки "Показати" у панелі перегляду (aside) */
+aside .btn-toggle-security,
+aside button:not(.btn) {
+    background-color: #e63946;
+    color: #ffffff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+aside .btn-toggle-security:hover,
+aside button:not(.btn):hover {
+    background-color: #c1121f;
+    transform: translateY(-1px);
+}
+
+aside .btn-toggle-security:active,
+aside button:not(.btn):active {
+    transform: translateY(0);
 }
 
 footer {
